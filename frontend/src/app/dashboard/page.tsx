@@ -2,16 +2,34 @@
 
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import { useAuth } from '@/lib/AuthContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
-  // Mock data for the dashboard
-  const user = {
-    name: "John Doe",
-    email: "john@example.com",
-    joined: "Jan 2024",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John"
-  };
+  const { user, isAuthenticated, logout } = useAuth();
+  const router = useRouter();
+  
+  const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'bookings' | 'reviews' | 'gallery'>('overview');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: '',
+    email: '',
+    phone: '+880 1XXX-XXXXXX',
+  });
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+    } else {
+      setProfileData({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: '+880 1XXX-XXXXXX',
+      });
+    }
+  }, [isAuthenticated, router, user]);
 
   const bookings = [
     {
@@ -32,117 +50,257 @@ export default function DashboardPage() {
     }
   ];
 
+  if (!isAuthenticated) return null;
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Dashboard Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user.name}</h1>
-            <p className="text-gray-600 mt-1">Manage your bookings and profile settings here.</p>
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 bg-gradient-hero rounded-full flex items-center justify-center text-white text-2xl font-bold">
+              {user?.name?.[0].toUpperCase()}
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Hello, {user?.name}</h1>
+              <p className="text-gray-600 mt-1">Manage your account and adventures.</p>
+            </div>
           </div>
-          <Link href="/booking">
-            <Button variant="luxury">New Booking</Button>
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/booking">
+              <Button variant="secondary" size="md">New Booking</Button>
+            </Link>
+            <Button variant="outline" size="md" onClick={logout} className="border-red-200 text-red-600 hover:bg-red-50">
+              Sign Out
+            </Button>
+          </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex overflow-x-auto pb-4 mb-8 scrollbar-hide border-b border-gray-200">
+          <div className="flex space-x-8">
+            {['overview', 'bookings', 'profile', 'reviews', 'gallery'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as any)}
+                className={`pb-4 text-sm font-bold capitalize whitespace-nowrap transition-colors relative ${
+                  activeTab === tab 
+                    ? 'text-primary-600' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab}
+                {activeTab === tab && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary-500 rounded-full"></div>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* User Profile Info */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card className="p-6">
-              <div className="text-center">
-                <div className="relative w-24 h-24 mx-auto mb-4">
-                  <img src={user.avatar} alt={user.name} className="rounded-full border-4 border-luxury-100" />
+          {/* Main Panel */}
+          <div className="lg:col-span-2 space-y-6">
+            {activeTab === 'overview' && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="p-6 bg-primary-50 border-primary-100">
+                    <p className="text-primary-700 text-sm font-bold uppercase tracking-wider mb-2">Total Trips</p>
+                    <p className="text-4xl font-black text-primary-900">2</p>
+                  </Card>
+                  <Card className="p-6 bg-secondary-50 border-secondary-100">
+                    <p className="text-secondary-700 text-sm font-bold uppercase tracking-wider mb-2">Miles Traveled</p>
+                    <p className="text-4xl font-black text-secondary-900">145</p>
+                  </Card>
+                  <Card className="p-6 bg-accent-50 border-accent-100">
+                    <p className="text-accent-700 text-sm font-bold uppercase tracking-wider mb-2">Reviews</p>
+                    <p className="text-4xl font-black text-accent-900">0</p>
+                  </Card>
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">{user.name}</h2>
-                <p className="text-gray-500 text-sm mb-6">{user.email}</p>
-                <div className="flex justify-center space-x-2">
-                  <span className="px-3 py-1 bg-luxury-50 text-luxury-600 text-xs font-bold rounded-full">Explorer</span>
-                  <span className="px-3 py-1 bg-primary-50 text-primary-600 text-xs font-bold rounded-full">Verified</span>
-                </div>
-              </div>
-              <div className="mt-8 pt-8 border-t border-gray-100 flex justify-between items-center text-sm font-medium">
-                <span className="text-gray-500">Member since</span>
-                <span className="text-gray-900">{user.joined}</span>
-              </div>
-            </Card>
 
-            <Card className="p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Quick Stats</h3>
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-                  <div className="text-2xl font-bold text-blue-600">2</div>
-                  <div className="text-xs text-blue-700 font-semibold">Total Trips</div>
+                <Card className="p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6">Recent Booking</h3>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center text-primary-600 shadow-sm border border-gray-100">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">{bookings[0].boat}</p>
+                        <p className="text-sm text-gray-500">ID: {bookings[0].id} • May 15, 2025</p>
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${bookings[0].statusColor}`}>
+                      {bookings[0].status}
+                    </span>
+                  </div>
+                </Card>
+              </>
+            )}
+
+            {activeTab === 'bookings' && (
+              <Card className="overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                  <h3 className="text-xl font-bold text-gray-900">Full Booking History</h3>
                 </div>
-                <div className="p-3 bg-primary-50 rounded-lg border border-primary-100">
-                  <div className="text-2xl font-bold text-primary-600">0</div>
-                  <div className="text-xs text-primary-700 font-semibold">Reviews</div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      <tr>
+                        <th className="px-6 py-4">Boat / Service</th>
+                        <th className="px-6 py-4">Date</th>
+                        <th className="px-6 py-4">Amount</th>
+                        <th className="px-6 py-4">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {bookings.map(b => (
+                        <tr key={b.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 font-bold text-gray-900">{b.boat}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{b.date}</td>
+                          <td className="px-6 py-4 font-bold">৳{b.total.toLocaleString()}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${b.statusColor}`}>
+                              {b.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            )}
+
+            {activeTab === 'profile' && (
+              <Card className="p-8">
+                <div className="flex justify-between items-center mb-8">
+                  <h3 className="text-xl font-bold text-gray-900">Personal Information</h3>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setIsEditingProfile(!isEditingProfile)}
+                  >
+                    {isEditingProfile ? 'Cancel' : 'Edit Profile'}
+                  </Button>
+                </div>
+                
+                <form className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Full Name</label>
+                      <input 
+                        type="text" 
+                        disabled={!isEditingProfile}
+                        value={profileData.name}
+                        onChange={e => setProfileData({...profileData, name: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none disabled:bg-gray-50 transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
+                      <input 
+                        type="email" 
+                        disabled
+                        value={profileData.email}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+                      <input 
+                        type="tel" 
+                        disabled={!isEditingProfile}
+                        value={profileData.phone}
+                        onChange={e => setProfileData({...profileData, phone: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none disabled:bg-gray-50 transition"
+                      />
+                    </div>
+                  </div>
+                  {isEditingProfile && (
+                    <div className="pt-4">
+                      <Button variant="primary" onClick={() => setIsEditingProfile(false)}>Save Changes</Button>
+                    </div>
+                  )}
+                </form>
+              </Card>
+            )}
+
+            {activeTab === 'reviews' && (
+              <Card className="p-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Write a Review</h3>
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Select Trip</label>
+                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+                      <option>River Pearl - Nov 10, 2024</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Rating</label>
+                    <div className="flex space-x-2 text-gold-500">
+                      {[1,2,3,4,5].map(s => (
+                        <button key={s} className="w-10 h-10 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gold-50 text-2xl">★</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Your Experience</label>
+                    <textarea 
+                      rows={4} 
+                      placeholder="Tell us about your trip..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none resize-none"
+                    ></textarea>
+                  </div>
+                  <Button variant="secondary" fullWidth>Post Review</Button>
+                </div>
+              </Card>
+            )}
+
+            {activeTab === 'gallery' && (
+              <Card className="p-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Upload Trip Photos</h3>
+                <div className="border-4 border-dashed border-gray-200 rounded-2xl p-12 text-center hover:border-primary-300 transition-colors cursor-pointer">
+                  <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4 text-primary-600">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-lg font-bold text-gray-900">Drop your photos here</p>
+                  <p className="text-gray-500 mt-2">or click to browse your files (JPEG, PNG up to 10MB)</p>
+                </div>
+                <div className="mt-8 grid grid-cols-3 gap-4">
+                  <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 border border-gray-200">
+                    Placeholder
+                  </div>
+                </div>
+              </Card>
+            )}
           </div>
 
-          {/* Bookings List */}
-          <div className="lg:col-span-2">
-            <Card className="h-full overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-lg font-bold text-gray-900">Your Bookings</h3>
-                <Link href="#" className="text-sm font-semibold text-primary-600 hover:text-primary-700">View All</Link>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50 uppercase text-xs font-bold text-gray-500 tracking-wider">
-                    <tr>
-                      <th className="px-6 py-4">Booking Info</th>
-                      <th className="px-6 py-4 text-center">Date</th>
-                      <th className="px-6 py-4 text-center">Amount</th>
-                      <th className="px-6 py-4 text-center">Status</th>
-                      <th className="px-6 py-4"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {bookings.map((booking) => (
-                      <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-gray-900">{booking.boat}</div>
-                          <div className="text-xs text-gray-400 font-mono">ID: {booking.id}</div>
-                        </td>
-                        <td className="px-6 py-4 text-center text-sm text-gray-600">
-                          {booking.date}
-                        </td>
-                        <td className="px-6 py-4 text-center font-semibold text-gray-900">
-                          ৳{booking.total.toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${booking.statusColor}`}>
-                            {booking.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button className="text-gray-400 hover:text-luxury-600">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              <div className="p-8 text-center bg-white">
-                <p className="text-gray-500 mb-4 italic text-sm">Need to make changes to your booking? Contact our support team directly.</p>
-                <div className="flex justify-center space-x-4">
-                  <Link href="/contact" className="text-sm font-bold text-luxury-600 hover:underline flex items-center">
-                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                     </svg>
-                     Support Chat
-                  </Link>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            <Card className="p-6 bg-luxury-900 text-white border-none shadow-luxury">
+              <h3 className="text-xl font-bold mb-4">Membership</h3>
+              <div className="space-y-4">
+                <div className="p-4 bg-white/10 rounded-xl">
+                  <p className="text-luxury-200 text-xs font-bold uppercase mb-1">Current Level</p>
+                  <p className="text-xl font-bold">Explorer Member</p>
+                </div>
+                <div className="p-4 bg-white/10 rounded-xl">
+                  <p className="text-luxury-200 text-xs font-bold uppercase mb-1">Points Balance</p>
+                  <p className="text-xl font-bold">1,250 WBT</p>
                 </div>
               </div>
+              <Button variant="secondary" fullWidth className="mt-6 shadow-gold">Redeem Rewards</Button>
+            </Card>
+
+            <Card className="p-6">
+              <h3 className="font-bold text-gray-900 mb-4">Support</h3>
+              <p className="text-sm text-gray-600 mb-4">Have questions regarding your upcoming trip or need to cancel?</p>
+              <Button href="/contact" variant="outline" fullWidth>Get Help</Button>
             </Card>
           </div>
         </div>

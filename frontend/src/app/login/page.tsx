@@ -2,12 +2,14 @@
 
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import { useAuth } from '@/lib/AuthContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -21,12 +23,11 @@ export default function LoginPage() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // In production, you would:
-    // const res = await fetch('/api/auth/login', { method: 'POST', body: JSON.stringify(formData) });
-    // if (res.ok) router.push('/dashboard');
+    // Demo logic: email contains 'admin' or 'mod' for role selection
+    login(formData.email);
     
-    alert('Login successful! (Demo mode)');
-    router.push('/booking');
+    const isSpecial = formData.email.includes('admin') || formData.email.includes('mod');
+    router.push(isSpecial ? '/admin/dashboard' : '/booking');
     setIsLoading(false);
   };
 
@@ -81,14 +82,14 @@ export default function LoginPage() {
                   <input type="checkbox" className="w-4 h-4 text-primary-600 rounded" />
                   <span className="ml-2 text-sm text-gray-600">Remember me</span>
                 </label>
-                <a href="#" className="text-sm text-primary-600 hover:text-primary-700">
+                <Link href="/recovery" className="text-sm text-primary-600 hover:text-primary-700">
                   Forgot password?
-                </a>
+                </Link>
               </div>
 
               <Button
                 type="submit"
-                variant="luxury"
+                variant="secondary"
                 fullWidth
                 disabled={isLoading}
                 className="disabled:opacity-50"

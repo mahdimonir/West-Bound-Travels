@@ -40,7 +40,6 @@ export default function HeroSection() {
               href="/boats" 
               size="lg" 
               variant="outline"
-              className="bg-white/10 backdrop-blur-sm text-white border-white hover:bg-white hover:text-primary-600"
             >
               Explore Our Fleet
             </Button>

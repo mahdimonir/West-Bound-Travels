@@ -34,8 +34,8 @@ export default function RegisterPage() {
     // const res = await fetch('/api/auth/register', { method: 'POST', body: JSON.stringify(formData) });
     // if (res.ok) router.push('/login');
     
-    alert('Registration successful! (Demo mode)\nPlease login to continue.');
-    router.push('/login');
+    alert('Registration successful! Please verify your email to activate your account.');
+    router.push('/verify-email');
     setIsLoading(false);
   };
 
@@ -148,7 +148,7 @@ export default function RegisterPage() {
 
               <Button
                 type="submit"
-                variant="luxury"
+                variant="secondary"
                 fullWidth
                 disabled={isLoading}
                 className="disabled:opacity-50"

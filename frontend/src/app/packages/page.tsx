@@ -35,10 +35,10 @@ export default function PackagesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Page Header */}
-      <section className="bg-gradient-to-r from-primary-600 to-accent-600 text-white py-20">
+      <section className="bg-gradient-hero text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in">
-            Packages & <span className="text-gradient-luxury">Pricing</span>
+            Packages & <span className="text-gradient-gold">Pricing</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-100 max-w-3xl mx-auto">
             Everything you need for an unforgettable houseboat adventure, 
@@ -59,9 +59,9 @@ export default function PackagesPage() {
               luxurious experience on the waters of Tanguar Haor. Book a single room 
               or rent an entire houseboat for your group.
             </p>
-            <div className="bg-luxury-50 border-l-4 border-luxury-500 p-6 rounded-r-lg">
+            <div className="bg-accent-50 border-l-4 border-accent-500 p-6 rounded-r-lg">
               <h3 className="font-bold text-gray-900 mb-2 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-luxury-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 mr-2 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Minimum Booking
@@ -80,7 +80,7 @@ export default function PackagesPage() {
               <ul className="space-y-3">
                 {inclusions.map((item, index) => (
                   <li key={index} className="flex items-start">
-                    <svg className="w-6 h-6 text-accent-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-luxury-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <span className="text-gray-700">{item}</span>
@@ -105,7 +105,7 @@ export default function PackagesPage() {
             {menuItems.map((menu, index) => (
               <Card key={index} hover={true} className="h-full">
                 <div className="p-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 bg-gradient-nature rounded-lg flex items-center justify-center mb-4">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
@@ -136,7 +136,7 @@ export default function PackagesPage() {
               travel dates, and selected destinations. Get a personalized quote 
               by completing your booking details.
             </p>
-            <Button href="/booking" variant="luxury" size="lg">
+            <Button href="/booking" variant="secondary" size="lg">
               Get Your Quote & Book Now
             </Button>
           </div>
@@ -177,7 +177,7 @@ export default function PackagesPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gradient-to-r from-primary-500 to-secondary-500 py-16">
+      <section className="bg-gradient-nature py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Questions About Our Packages?
@@ -186,14 +186,10 @@ export default function PackagesPage() {
             Our team is here to help you plan the perfect trip. Get in touch for personalized assistance.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button href="/contact" variant="luxury" size="lg">
+            <Button href="/contact" variant="secondary" size="lg">
               Contact Us
             </Button>
-            <Button 
-              href="/boats" 
-              size="lg"
-              className="bg-white/10 backdrop-blur-sm text-white hover:bg-white hover:text-primary-600 border-2 border-white"
-            >
+            <Button href="/boats" variant="outlineSecondary" size="lg">
               View Our Fleet
             </Button>
           </div>

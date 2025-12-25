@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ButtonHTMLAttributes, ReactNode } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'luxury' | 'accent';
+  variant?: 'primary' | 'secondary' | 'outline' | 'outlineSecondary' | 'luxury' | 'accent';
   size?: 'sm' | 'md' | 'lg';
   children: ReactNode;
   href?: string;
@@ -23,9 +23,10 @@ export default function Button({
   
   const variants = {
     primary: 'btn-primary',
-    secondary: 'btn-gold',
+    secondary: 'btn-gold shadow-gold',
     outline: 'btn-outline-primary',
-    luxury: 'btn-gold shadow-gold',
+    outlineSecondary: 'btn-outline-secondary',
+    luxury: 'btn-luxury shadow-luxury',
     accent: 'btn-accent',
   };
   

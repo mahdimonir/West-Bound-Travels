@@ -6,11 +6,12 @@ import boatsData from '@/data/boats.json';
 import destinationsData from '@/data/destinations.json';
 import { Boat, Destination } from '@/types';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 
-export default function BookingPage() {
+function BookingContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const boats = boatsData as Boat[];
   const destinations = destinationsData as Destination[];
 
@@ -24,10 +25,43 @@ export default function BookingPage() {
     selectedDestinations: [] as string[],
   });
 
+  // Handle auto-selection and default dates
+  useEffect(() => {
+    const boatId = searchParams.get('boatId');
+    const today = new Date();
+    
+    // Check-in: 2 days after today
+    const checkInDate = new Date(today);
+    checkInDate.setDate(today.getDate() + 2);
+    const checkInStr = checkInDate.toISOString().split('T')[0];
+    
+    // Check-out: check-in + 2 days
+    const checkOutDate = new Date(checkInDate);
+    checkOutDate.setDate(checkInDate.getDate() + 2);
+    const checkOutStr = checkOutDate.toISOString().split('T')[0];
+
+    setBookingData(prev => ({
+      ...prev,
+      boatId: boatId || prev.boatId,
+      checkIn: checkInStr,
+      checkOut: checkOutStr,
+    }));
+
+    if (boatId) {
+      setStep(2);
+    }
+  }, [searchParams]);
+
   const selectedBoat = boats.find(b => b._id === bookingData.boatId);
+  
   const totalDays = bookingData.checkIn && bookingData.checkOut
     ? Math.ceil((new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) / (1000 * 60 * 60 * 24))
     : 0;
+  
+  const totalNights = Math.max(0, totalDays - 1);
+
+  // Meal calculation: days * 2 + nights * 1
+  const totalMeals = totalDays > 0 ? (totalDays * 2 + totalNights * 1) : 0;
 
   // Calculate price
   const basePrice = selectedBoat?.type === 'AC' ? 15000 : 10000;
@@ -85,37 +119,43 @@ export default function BookingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      {/* Header */}
-      <section className="bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Book Your Adventure</h1>
-          <p className="text-xl text-gray-100">Create unforgettable memories on the waters of Tanguar Haor</p>
+      {/* Page Header */}
+      <section className="bg-gradient-hero text-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in">
+            Book Your <span className="text-gradient-gold">Adventure</span>
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-100 max-w-3xl mx-auto">
+            Create unforgettable memories on the waters of Tanguar Haor.
+          </p>
         </div>
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Progress Steps */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between max-w-3xl mx-auto">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <div key={s} className="flex items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                  step >= s ? 'bg-luxury-500 text-white' : 'bg-gray-300 text-gray-600'
-                }`}>
-                  {s}
+        <div className="mb-12 overflow-x-auto pb-4 scrollbar-hide">
+          <div className="min-w-[600px] max-w-4xl mx-auto px-4">
+            <div className="flex items-center justify-between">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <div key={s} className="flex items-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                    step >= s ? 'bg-luxury-500 text-white' : 'bg-gray-300 text-gray-600'
+                  }`}>
+                    {s}
+                  </div>
+                  {s < 5 && (
+                    <div className={`w-16 h-1 ${step > s ? 'bg-luxury-500' : 'bg-gray-300'}`} />
+                  )}
                 </div>
-                {s < 5 && (
-                  <div className={`w-16 h-1 ${step > s ? 'bg-luxury-500' : 'bg-gray-300'}`} />
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-between max-w-3xl mx-auto mt-2 text-sm">
-            <span className={step >= 1 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Boat</span>
-            <span className={step >= 2 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Dates</span>
-            <span className={step >= 3 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Rooms</span>
-            <span className={step >= 4 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Places</span>
-            <span className={step >= 5 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Review</span>
+              ))}
+            </div>
+            <div className="flex justify-between max-w-3xl mx-auto mt-2 text-sm">
+              <span className={step >= 1 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Boat</span>
+              <span className={step >= 2 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Dates</span>
+              <span className={step >= 3 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Rooms</span>
+              <span className={step >= 4 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Places</span>
+              <span className={step >= 5 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Review</span>
+            </div>
           </div>
         </div>
 
@@ -325,14 +365,14 @@ export default function BookingPage() {
               {step < 5 ? (
                 <Button
                   onClick={() => setStep(step + 1)}
-                  variant="luxury"
+                  variant="secondary"
                   disabled={!canProceed()}
                   className="ml-auto disabled:opacity-50"
                 >
                   Continue
                 </Button>
               ) : (
-                <Button onClick={handleSubmit} variant="luxury" className="ml-auto">
+                <Button onClick={handleSubmit} variant="secondary" className="ml-auto">
                   Proceed to Payment
                 </Button>
               )}
@@ -341,7 +381,7 @@ export default function BookingPage() {
 
           {/* Sidebar - Price Summary */}
           <div>
-            <Card luxury className="sticky top-4">
+            <Card luxury className="sticky top-24">
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Price Summary</h3>
                 <div className="space-y-3 mb-6">
@@ -369,7 +409,7 @@ export default function BookingPage() {
                 <div className="bg-luxury-50 p-4 rounded-lg text-sm">
                   <h4 className="font-semibold text-gray-900 mb-2">Includes:</h4>
                   <ul className="space-y-1 text-gray-700">
-                    <li>✓ 5 premium meals</li>
+                    <li>✓ {totalMeals} premium meals</li>
                     <li>✓ All destinations</li>
                     <li>✓ Captain & crew</li>
                     <li>✓ Safety equipment</li>
@@ -383,3 +423,12 @@ export default function BookingPage() {
     </div>
   );
 }
+
+export default function BookingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading booking...</div>}>
+      <BookingContent />
+    </Suspense>
+  );
+}
+

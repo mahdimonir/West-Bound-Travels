@@ -36,7 +36,7 @@ export default function PaymentSuccessPage() {
 
           <div className="space-y-4">
             <Link href="/dashboard" className="block w-full">
-              <Button variant="luxury" className="w-full">
+              <Button variant="secondary" className="w-full">
                 Go to Dashboard
               </Button>
             </Link>
