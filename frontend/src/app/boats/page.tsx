@@ -18,12 +18,8 @@ export default function BoatsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Page Header */}
-      <section className="bg-gradient-hero text-white py-20  overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary-500/10 rounded-full -ml-32 -mb-32 blur-3xl"></div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+      <section className="bg-gradient-hero text-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in">
             Our Premium <span className="text-gradient-gold">Fleet</span>
           </h1>
@@ -35,7 +31,7 @@ export default function BoatsPage() {
       </section>
 
       {/* Filter Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex justify-center">
         <div className="bg-white rounded-xl shadow-elevated p-2 inline-flex gap-2">
           <button
             onClick={() => setFilter('all')}
@@ -182,7 +178,7 @@ export default function BoatsPage() {
 
                 {/* CTA Button */}
                 <Button 
-                  href="/booking" 
+                  href={`/booking?boatId=${boat._id}`} 
                   variant="secondary" 
                   fullWidth
                   className="text-lg shadow-gold"
@@ -221,7 +217,7 @@ export default function BoatsPage() {
             <Button 
               href="/packages" 
               size="lg"
-              className="bg-white/10 backdrop-blur-sm text-white hover:bg-white hover:text-primary-600 border-2 border-white"
+              variant='outlineSecondary'
             >
               View Packages
             </Button>

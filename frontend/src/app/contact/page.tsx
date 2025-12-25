@@ -1,5 +1,6 @@
 'use client';
 
+import FAQ from '@/components/home/FAQ';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { useState } from 'react';
@@ -84,12 +85,8 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Page Header */}
-      <section className="bg-gradient-hero text-white py-20 relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary-500/10 rounded-full -ml-32 -mb-32 blur-3xl"></div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+      <section className="bg-gradient-hero text-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in">
             Get In <span className="text-gradient-gold">Touch</span>
           </h1>
@@ -100,7 +97,7 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Info Cards */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 mb-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {contactInfo.map((info, index) => (
             <Card key={index} luxury={true} hover={true}>
@@ -286,29 +283,7 @@ export default function ContactPage() {
       </section>
 
       {/* FAQ Teaser */}
-      <section className="bg-gray-100 py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Looking for Quick Answers?
-          </h2>
-          <p className="text-gray-600 mb-8">
-            Check out our frequently asked questions or view our packages for detailed information.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button href="/packages" variant="primary" size="lg">
-              View Packages
-            </Button>
-            <Button 
-              href="/boats" 
-              size="lg"
-              // variant="outline"
-              className="bg-white text-primary-600 hover:bg-gray-50 border-2 border-gray-300"
-            >
-              See Our Fleet
-            </Button>
-          </div>
-        </div>
-      </section>
+      <FAQ />
     </div>
   );
 }

@@ -1,10 +1,12 @@
 'use client';
 
+import { useAuth } from '@/lib/AuthContext';
 import Link from 'next/link';
 import { useState } from 'react';
 import Button from '../ui/Button';
 
 export default function Navbar() {
+  const { user, logout, isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   const navLinks = [
@@ -48,11 +50,25 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* CTA Button */}
-          <div className="hidden lg:block">
-            <Button href="/booking" size="sm" variant="secondary" className="shadow-gold">
-              Book Now
-            </Button>
+          {/* Auth/CTA Button */}
+          <div className="hidden lg:flex items-center space-x-4">
+            {isAuthenticated ? (
+              <>
+                <Link href={user?.role === 'admin' ? '/admin/dashboard' : '/dashboard'} className="text-sm font-medium text-gray-700 hover:text-primary-600">
+                  Dashboard
+                </Link>
+                <button 
+                  onClick={logout}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-500 hover:bg-red-600 transition"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <Button href="/login" size="sm" variant="secondary" className="shadow-gold">
+                Sign In
+              </Button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -93,10 +109,28 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
-            <div className="px-3 py-2">
-              <Button href="/booking" fullWidth variant="secondary" className="shadow-gold">
-                Book Now
-              </Button>
+            <div className="px-3 py-2 space-y-2">
+              {isAuthenticated ? (
+                <>
+                  <Link 
+                    href={user?.role === 'admin' ? '/admin/dashboard' : '/dashboard'} 
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-primary-50"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <button 
+                    onClick={() => { logout(); setIsOpen(false); }}
+                    className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <Button href="/login" fullWidth variant="secondary" className="shadow-gold" onClick={() => setIsOpen(false)}>
+                  Sign In
+                </Button>
+              )}
             </div>
           </div>
         </div>

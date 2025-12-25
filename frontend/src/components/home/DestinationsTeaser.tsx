@@ -97,7 +97,7 @@ export default function DestinationsTeaser() {
             <Button 
               href="/destinations" 
               size="lg" 
-              className="bg-white/20 backdrop-blur-sm text-white hover:bg-white hover:text-primary-600 border-2 border-white"
+              variant="outlineSecondary"
             >
               View All Destinations
             </Button>

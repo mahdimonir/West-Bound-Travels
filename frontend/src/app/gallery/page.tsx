@@ -1,5 +1,6 @@
 'use client';
 
+import Button from '@/components/ui/Button';
 import Image from 'next/image';
 import { useState } from 'react';
 
@@ -25,12 +26,12 @@ export default function GalleryPage() {
     : galleryImages.filter(img => img.category === selectedCategory);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Page Header */}
-      <section className="bg-gradient-to-r from-accent-600 to-secondary-600 text-white py-20">
+      <section className="bg-gradient-hero text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in">
-            Photo <span className="text-gradient-luxury">Gallery</span>
+            Photo <span className="text-gradient-gold">Gallery</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-100 max-w-3xl mx-auto">
             Explore stunning visuals of our luxury houseboats and the breathtaking 
@@ -40,16 +41,16 @@ export default function GalleryPage() {
       </section>
 
       {/* Category Filter */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-wrap justify-center gap-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex justify-center">
+        <div className="bg-white rounded-xl shadow-elevated p-2 flex gap-2 overflow-x-auto max-w-full whitespace-nowrap">
           {categories.map((category) => (
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
               className={`px-6 py-3 rounded-lg font-medium transition-all ${
                 selectedCategory === category
-                  ? 'bg-gradient-to-r from-luxury-500 to-luxury-400 text-white shadow-luxury'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 shadow-md'
+                  ? 'bg-gradient-nature text-white shadow-nature'
+                  : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
               {category}
@@ -77,14 +78,14 @@ export default function GalleryPage() {
               {/* Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <span className="text-xs bg-luxury-500 text-white px-2 py-1 rounded-full">
+                  <span className="text-xs bg-primary-500 text-white px-2 py-1 rounded-full">
                     {image.category}
                   </span>
                   <p className="text-white mt-2 font-medium">{image.alt}</p>
                 </div>
               </div>
               {/* Zoom Icon */}
-              <div className="absolute top-4 right-4 bg-white/90 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-4 right-4 bg-white/90 p-2 rounded-full opacity-0 hover:bg-secondary-400 group-hover:opacity-100 transition-opacity">
                 <svg className="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                 </svg>
@@ -111,7 +112,7 @@ export default function GalleryPage() {
           onClick={() => setSelectedImage(null)}
         >
           <button
-            className="absolute top-4 right-4 text-white hover:text-luxury-400 transition-colors"
+            className="absolute top-4 right-4 text-white hover:text-accent-500 transition-colors"
             onClick={() => setSelectedImage(null)}
           >
             <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,7 +139,7 @@ export default function GalleryPage() {
       )}
 
       {/* CTA Section */}
-      <section className="bg-gradient-to-r from-primary-500 to-secondary-500 py-16">
+      <section className="bg-gradient-nature py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Create Your Own Memories
@@ -146,28 +147,11 @@ export default function GalleryPage() {
           <p className="text-lg mb-8 opacity-90">
             Book your houseboat adventure and capture unforgettable moments at these stunning locations.
           </p>
-          <Button href="/booking" variant="luxury" size="lg">
+          <Button href="/booking" variant="secondary" size="lg">
             Book Now
           </Button>
         </div>
       </section>
     </div>
-  );
-}
-
-function Button({ href, variant, size, children, className = '' }: any) {
-  return (
-    <a
-      href={href}
-      className={`inline-flex items-center justify-center font-medium transition-all duration-200 rounded-lg ${
-        variant === 'luxury'
-          ? 'bg-gradient-to-r from-luxury-500 to-luxury-400 hover:from-luxury-600 hover:to-luxury-500 text-white shadow-luxury hover:shadow-elevated'
-          : ''
-      } ${
-        size === 'lg' ? 'px-8 py-4 text-lg' : 'px-6 py-3'
-      } ${className}`}
-    >
-      {children}
-    </a>
   );
 }

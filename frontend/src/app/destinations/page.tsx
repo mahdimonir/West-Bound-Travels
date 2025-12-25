@@ -134,7 +134,7 @@ export default function DestinationsPage() {
           <p className="text-lg mb-8 opacity-90">
             Book your houseboat journey today and create unforgettable memories at Bangladesh's most beautiful locations.
           </p>
-          <Button href="/booking" variant="luxury" size="lg">
+          <Button href="/booking" variant="secondary" size="lg">
             Book Your Adventure
           </Button>
         </div>
