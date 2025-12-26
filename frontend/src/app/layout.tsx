@@ -1,6 +1,7 @@
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import { AuthProvider } from "@/lib/AuthContext";
+import { NotificationProvider } from "@/lib/NotificationContext";
 import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
 import "./globals.css";
@@ -40,11 +41,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${montserrat.variable} ${inter.variable} antialiased`}>
         <AuthProvider>
-          <Navbar />
+          <NotificationProvider>
+            <Navbar />
           <main className="min-h-screen">
-            {children}
-          </main>
-          <Footer />
+              {children}
+            </main>
+            <Footer />
+          </NotificationProvider>
         </AuthProvider>
       </body>
     </html>

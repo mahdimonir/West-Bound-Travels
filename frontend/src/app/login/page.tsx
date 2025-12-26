@@ -27,7 +27,7 @@ export default function LoginPage() {
     login(formData.email);
     
     const isSpecial = formData.email.includes('admin') || formData.email.includes('mod');
-    router.push(isSpecial ? '/admin/dashboard' : '/booking');
+    router.push(isSpecial ? '/dashboard' : '/booking');
     setIsLoading(false);
   };
 
