@@ -32,7 +32,7 @@ export class BookingService {
     if (expiredBookings.length > 0) {
       await prisma.booking.updateMany({
         where: {
-          id: { in: expiredBookings.map(b => b.id) },
+          id: { in: expiredBookings.map((b: { id: string }) => b.id) },
         },
         data: { status: "COMPLETED" },
       });
