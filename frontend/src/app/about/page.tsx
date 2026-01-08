@@ -2,7 +2,9 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Image from 'next/image';
 
+export const dynamic = 'force-dynamic';
 export default function AboutPage() {
+
   const values = [
     {
       icon: (
@@ -61,7 +63,7 @@ export default function AboutPage() {
             About <span className="text-gradient-gold">West Bound Travels</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-100 max-w-3xl mx-auto">
-            Bringing you closer to Bangladesh's natural wonders through luxury houseboat experiences
+            Bringing you closer to Bangladesh&apos;s natural wonders through luxury houseboat experiences
           </p>
         </div>
       </section>
@@ -77,19 +79,19 @@ export default function AboutPage() {
               <p>
                 West Bound Travels was born from a passion for showcasing the untouched beauty 
                 of Tanguar Haor and the surrounding regions of Sylhet. What started as a dream 
-                to share these hidden gems with travelers has grown into Bangladesh's premier 
+                to share these hidden gems with travelers has grown into Bangladesh&apos;s premier 
                 luxury houseboat tour service.
               </p>
               <p>
-                We believe that experiencing nature shouldn't mean compromising on comfort. 
+                We believe that experiencing nature shouldn&apos;t mean compromising on comfort. 
                 Our fleet of premium houseboats combines traditional charm with modern amenities, 
                 offering you the perfect base to explore crystal-clear waters, lush green hills, 
                 and stunning wetlands.
               </p>
               <p>
                 With years of experience navigating the haor, our dedicated team ensures every 
-                journey is safe, comfortable, and filled with unforgettable moments. We're not 
-                just a tour operator – we're your gateway to discovering the soul of Bangladesh's 
+                journey is safe, comfortable, and filled with unforgettable moments. We&apos;re not 
+                just a tour operator – we&apos;re your gateway to discovering the soul of Bangladesh&apos;s 
                 natural heritage.
               </p>
             </div>
@@ -118,7 +120,7 @@ export default function AboutPage() {
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h3>
               <p className="text-gray-700 leading-relaxed">
                 To provide exceptional luxury houseboat experiences that connect travelers 
-                with Bangladesh's pristine natural beauty while promoting sustainable tourism 
+                with Bangladesh&apos;s pristine natural beauty while promoting sustainable tourism 
                 and supporting local communities.
               </p>
             </div>
@@ -195,7 +197,7 @@ export default function AboutPage() {
             Ready to Embark on Your Adventure?
           </h2>
           <p className="text-lg mb-8 opacity-90">
-            Join us on an unforgettable journey through Bangladesh's most beautiful waterways.
+            Join us on an unforgettable journey through Bangladesh&apos;s most beautiful waterways.
           </p>
           <Button href="/booking" variant="secondary" size="lg" className="shadow-gold">
             Book Your Journey

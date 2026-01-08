@@ -1,173 +1,294 @@
-'use client';
+"use client";
 
-import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import api from "@/lib/api";
+import { Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [step, setStep] = useState<"form" | "verify">("form");
+  const [email, setEmail] = useState("");
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setError("");
+    setMessage("");
+
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      setError("Passwords do not match");
       return;
     }
-    
-    setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // In production:
-    // const res = await fetch('/api/auth/register', { method: 'POST', body: JSON.stringify(formData) });
-    // if (res.ok) router.push('/login');
-    
-    alert('Registration successful! Please verify your email to activate your account.');
-    router.push('/verify-email');
-    setIsLoading(false);
+
+    setLoading(true);
+    try {
+      await api.post("/auth/register", {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone || undefined,
+      });
+
+      setEmail(formData.email);
+      setStep("verify");
+      setMessage("Verification code sent to your email!");
+    } catch (err: any) {
+      setError(err.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center py-12 px-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await api.post<{ token: string; user: any }>(
+        "/auth/register/verify",
+        {
+          email,
+          otp,
+        }
+      );
+
+      localStorage.setItem("token", res.token);
+      localStorage.setItem("user", JSON.stringify(res.user));
+
+      router.push(res.user.role === "ADMIN" ? "/dashboard" : "/booking");
+    } catch (err: any) {
+      setError(err.message || "Invalid or expired code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setLoading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      await api.post("/auth/register/resend", { email });
+      setMessage("New code sent!");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Verification Step
+  if (step === "verify") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full p-8 shadow-2xl">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900">
+              Check Your Email
+            </h2>
+            <p className="text-gray-600 mt-2">
+              We sent a 6-digit code to <strong>{email}</strong>
+            </p>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
-          <p className="text-gray-600">Join us for amazing boat adventures</p>
-        </div>
 
-        <Card luxury>
-          <div className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
-                  placeholder="John Doe"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
-                  placeholder="you@example.com"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  required
-                  value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
-                  placeholder="+880 1XXX-XXXXXX"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  required
-                  minLength={6}
-                  value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
-                  placeholder="••••••••"
-                />
-                <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
-              </div>
-
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm Password
-                </label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <div className="flex items-start">
-                <input type="checkbox" required className="w-4 h-4 text-primary-600 rounded mt-1" />
-                <label className="ml-2 text-sm text-gray-600">
-                  I agree to the{' '}
-                  <Link href="/terms" className="text-primary-600 hover:text-primary-700">
-                    Terms & Conditions
-                  </Link>
-                  {' '}and{' '}
-                  <Link href="/privacy" className="text-primary-600 hover:text-primary-700">
-                    Privacy Policy
-                  </Link>
-                </label>
-              </div>
-
-              <Button
-                type="submit"
-                variant="secondary"
-                fullWidth
-                disabled={isLoading}
-                className="disabled:opacity-50"
-              >
-                {isLoading ? 'Creating account...' : 'Create Account'}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-gray-600">
-                Already have an account?{' '}
-                <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-                  Sign in
-                </Link>
-              </p>
+          <form onSubmit={handleVerify} className="space-y-6">
+            <div>
+              <input
+                type="text"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                className="w-full text-center text-4xl tracking-widest letter-spacing-8 px-6 py-4 border-2 border-gray-300 rounded-xl focus:border-primary-500 focus:outline-none"
+                placeholder="000000"
+                required
+              />
             </div>
+
+            <Button type="submit" fullWidth disabled={loading}>
+              {loading ? "Verifying..." : "Verify & Continue"}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Didn&apos;t receive it?{" "}
+              <button
+                onClick={handleResend}
+                disabled={loading}
+                className="text-primary-600 font-semibold hover:underline"
+              >
+                Resend code
+              </button>
+            </p>
           </div>
+
+          {message && (
+            <p className="mt-4 text-center text-green-600">{message}</p>
+          )}
+          {error && <p className="mt-4 text-center text-red-600">{error}</p>}
         </Card>
       </div>
+    );
+  }
+
+  // Registration Form
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <Card className="max-w-lg w-full p-8 shadow-2xl">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Create Your Account
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Join West Bound Travels for luxury adventures
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Full Name
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              placeholder="John Doe"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              placeholder="you@example.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Phone (Optional)
+            </label>
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) =>
+                setFormData({ ...formData, phone: e.target.value })
+              }
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              placeholder="+880 1XXX XXXXXX"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={6}
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg pr-12 focus:ring-2 focus:ring-primary-500"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900"
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Confirm Password
+            </label>
+            <div className="relative">
+              <input
+                type={showConfirm ? "text" : "password"}
+                required
+                value={formData.confirmPassword}
+                onChange={(e) =>
+                  setFormData({ ...formData, confirmPassword: e.target.value })
+                }
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg pr-12 focus:ring-2 focus:ring-primary-500"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900"
+              >
+                {showConfirm ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <Button type="submit" fullWidth disabled={loading}>
+            {loading ? "Sending Code..." : "Create Account"}
+          </Button>
+        </form>
+
+        {error && <p className="mt-4 text-center text-red-600">{error}</p>}
+        {message && (
+          <p className="mt-4 text-center text-green-600">{message}</p>
+        )}
+
+        <p className="mt-8 text-center text-gray-600">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="text-primary-600 font-semibold hover:underline"
+          >
+            Sign in
+          </Link>
+        </p>
+      </Card>
     </div>
   );
 }

@@ -1,11 +1,19 @@
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import destinationsData from '@/data/destinations.json';
+import { destinationsService } from '@/lib/services';
 import { Destination } from '@/types';
 import Image from 'next/image';
 
-export default function DestinationsPage() {
-  const destinations = destinationsData as Destination[];
+export const dynamic = 'force-dynamic';
+
+export default async function DestinationsPage() {
+  let destinations: Destination[] = [];
+  try {
+    const res = await destinationsService.getAll();
+    if (res.data) destinations = res.data;
+  } catch (err) {
+    console.error('Failed to fetch destinations:', err);
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
@@ -132,7 +140,7 @@ export default function DestinationsPage() {
             Ready to Explore These Destinations?
           </h2>
           <p className="text-lg mb-8 opacity-90">
-            Book your houseboat journey today and create unforgettable memories at Bangladesh's most beautiful locations.
+            Book your houseboat journey today and create unforgettable memories at Bangladesh&apos;s most beautiful locations.
           </p>
           <Button href="/booking" variant="secondary" size="lg">
             Book Your Adventure

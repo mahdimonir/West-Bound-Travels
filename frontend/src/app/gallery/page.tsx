@@ -1,29 +1,49 @@
-'use client';
+"use client";
 
-import Button from '@/components/ui/Button';
-import Image from 'next/image';
-import { useState } from 'react';
-
-const galleryImages = [
-  { id: 1, src: '/images/hero-boat.jpg', alt: 'Luxury houseboat exterior', category: 'Boats' },
-  { id: 2, src: '/images/destinations/tanguar-haor.jpg', alt: 'Tanguar Haor wetland', category: 'Destinations' },
-  { id: 3, src: '/images/destinations/niladri-lake.jpg', alt: 'Niladri Lake turquoise waters', category: 'Destinations' },
-  { id: 4, src: '/images/boats/captain-exterior.jpg', alt: 'Captain House Boat', category: 'Boats' },
-  { id: 5, src: '/images/destinations/watch-tower.jpg', alt: 'Sunset at Tanguar Haor', category: 'Nature' },
-  { id: 6, src: '/images/destinations/niladri-lake.jpg', alt: 'Hills and quarry lake', category: 'Nature' },
-  { id: 7, src: '/images/boats/hoarer-exterior.jpg', alt: 'Hoarer Sultan House Boat', category: 'Boats' },
-  { id: 8, src: '/images/hero-boat.jpg', alt: 'Houseboat on calm water', category: 'Boats' },
-];
+import Button from "@/components/ui/Button";
+import { galleryService, type GalleryItem } from "@/lib/services";
+import { useToast } from "@/lib/toast";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 export default function GalleryPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [selectedImage, setSelectedImage] = useState<number | null>(null);
+  const { error } = useToast();
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [galleryImages, setGalleryImages] = useState<GalleryItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = ['All', 'Boats', 'Destinations', 'Nature'];
+  const categories = ["All", "Boats", "Destinations", "Nature"];
 
-  const filteredImages = selectedCategory === 'All'
-    ? galleryImages
-    : galleryImages.filter(img => img.category === selectedCategory);
+  useEffect(() => {
+    const fetchGallery = async () => {
+      try {
+        const response = await galleryService.list();
+        if (response.data) {
+          // Map API fields to frontend fields (API uses src/alt/category, we use url/caption/destination)
+          const mapped = response.data.map((item: any) => ({
+            id: item.id || item._id,
+            url: item.src || item.url || '',
+            caption: item.alt || item.caption || '',
+            destination: item.category === 'BOAT' ? 'Boats' : item.category === 'DESTINATION' ? 'Destinations' : item.category === 'NATURE' ? 'Nature' : 'General',
+            createdAt: item.createdAt || '',
+          }));
+          setGalleryImages(mapped);
+        }
+      } catch (err) {
+        console.error('Failed to fetch gallery:', err);
+        error('Failed to load gallery images.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGallery();
+  }, [error]);
+
+  const filteredImages =
+    selectedCategory === "All"
+      ? galleryImages
+      : galleryImages.filter((img) => img.destination === selectedCategory);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -34,8 +54,8 @@ export default function GalleryPage() {
             Photo <span className="text-gradient-gold">Gallery</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-100 max-w-3xl mx-auto">
-            Explore stunning visuals of our luxury houseboats and the breathtaking 
-            destinations of Tanguar Haor and Sylhet.
+            Explore stunning visuals of our luxury houseboats and the
+            breathtaking destinations of Tanguar Haor and Sylhet.
           </p>
         </div>
       </section>
@@ -49,8 +69,8 @@ export default function GalleryPage() {
               onClick={() => setSelectedCategory(category)}
               className={`px-6 py-3 rounded-lg font-medium transition-all ${
                 selectedCategory === category
-                  ? 'bg-gradient-nature text-white shadow-nature'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? "bg-gradient-nature text-white shadow-nature"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               {category}
@@ -70,8 +90,8 @@ export default function GalleryPage() {
               onClick={() => setSelectedImage(image.id)}
             >
               <Image
-                src={image.src}
-                alt={image.alt}
+                src={image.url}
+                alt={image.caption || 'Gallery image'}
                 fill
                 className="object-cover group-hover:scale-110 transition-transform duration-500"
               />
@@ -79,15 +99,25 @@ export default function GalleryPage() {
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <div className="absolute bottom-0 left-0 right-0 p-4">
                   <span className="text-xs bg-primary-500 text-white px-2 py-1 rounded-full">
-                    {image.category}
+                    {image.destination || 'General'}
                   </span>
-                  <p className="text-white mt-2 font-medium">{image.alt}</p>
+                  <p className="text-white mt-2 font-medium">{image.caption}</p>
                 </div>
               </div>
               {/* Zoom Icon */}
               <div className="absolute top-4 right-4 bg-white/90 p-2 rounded-full opacity-0 hover:bg-secondary-400 group-hover:opacity-100 transition-opacity">
-                <svg className="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                <svg
+                  className="w-5 h-5 text-gray-900"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                  />
                 </svg>
               </div>
             </div>
@@ -97,10 +127,22 @@ export default function GalleryPage() {
         {/* No Results */}
         {filteredImages.length === 0 && (
           <div className="text-center py-12">
-            <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg
+              className="w-16 h-16 mx-auto text-gray-400 mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
-            <p className="text-xl text-gray-600">No images found in this category.</p>
+            <p className="text-xl text-gray-600">
+              No images found in this category.
+            </p>
           </div>
         )}
       </section>
@@ -115,22 +157,36 @@ export default function GalleryPage() {
             className="absolute top-4 right-4 text-white hover:text-accent-500 transition-colors"
             onClick={() => setSelectedImage(null)}
           >
-            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-10 h-10"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
           <div className="relative max-w-7xl max-h-full">
-            {galleryImages.find(img => img.id === selectedImage) && (
+            {galleryImages.find((img) => img.id === selectedImage) && (
               <div className="relative w-full h-full">
                 <Image
-                  src={galleryImages.find(img => img.id === selectedImage)!.src}
-                  alt={galleryImages.find(img => img.id === selectedImage)!.alt}
+                  src={
+                    galleryImages.find((img) => img.id === selectedImage)!.url
+                  }
+                  alt={
+                    galleryImages.find((img) => img.id === selectedImage)!.caption || 'Gallery image'
+                  }
                   width={1200}
                   height={800}
                   className="object-contain max-h-[90vh]"
                 />
                 <p className="text-white text-center mt-4 text-lg">
-                  {galleryImages.find(img => img.id === selectedImage)!.alt}
+                  {galleryImages.find((img) => img.id === selectedImage)!.caption}
                 </p>
               </div>
             )}
@@ -145,7 +201,8 @@ export default function GalleryPage() {
             Create Your Own Memories
           </h2>
           <p className="text-lg mb-8 opacity-90">
-            Book your houseboat adventure and capture unforgettable moments at these stunning locations.
+            Book your houseboat adventure and capture unforgettable moments at
+            these stunning locations.
           </p>
           <Button href="/booking" variant="secondary" size="lg">
             Book Now

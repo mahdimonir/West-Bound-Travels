@@ -1,10 +1,13 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import boatsData from '@/data/boats.json';
-import destinationsData from '@/data/destinations.json';
-import { Boat, Destination } from '@/types';
+import { useAuth } from '@/lib/AuthContext';
+import { boatsService, bookingsService, BookingWithDetails } from '@/lib/services';
+import { useToast } from '@/lib/toast';
+import { Boat } from '@/types';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -12,18 +15,47 @@ import { Suspense, useEffect, useState } from 'react';
 function BookingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const boats = boatsData as Boat[];
-  const destinations = destinationsData as Destination[];
+  const { isAuthenticated } = useAuth();
+  const { success, warning, error: toastError } = useToast();
+  
+  const [boats, setBoats] = useState<Boat[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [minNights, setMinNights] = useState(1);
 
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingData, setBookingData] = useState({
     boatId: '',
     checkIn: '',
     checkOut: '',
     rooms: [] as { type: string; quantity: number }[],
     passengers: 2,
-    selectedDestinations: [] as string[],
   });
+
+  const [availability, setAvailability] = useState<Record<string, { total: number; booked: number; available: number }>>({});
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  // Fetch boats and min nights setting
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [boatsRes, minNightsRes] = await Promise.all([
+          boatsService.getBoats(),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/settings/min-nights`).then(r => r.json())
+        ]);
+        if (boatsRes.data) setBoats(boatsRes.data);
+        if (minNightsRes.success && minNightsRes.data?.minNights) {
+          setMinNights(minNightsRes.data.minNights);
+        }
+      } catch (err) {
+        console.error('Failed to fetch booking data:', err);
+        toastError('Failed to load booking information.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [toastError]);
 
   // Handle auto-selection and default dates
   useEffect(() => {
@@ -35,9 +67,9 @@ function BookingContent() {
     checkInDate.setDate(today.getDate() + 2);
     const checkInStr = checkInDate.toISOString().split('T')[0];
     
-    // Check-out: check-in + 2 days
+    // Check-out: check-in + minNights
     const checkOutDate = new Date(checkInDate);
-    checkOutDate.setDate(checkInDate.getDate() + 2);
+    checkOutDate.setDate(checkInDate.getDate() + minNights);
     const checkOutStr = checkOutDate.toISOString().split('T')[0];
 
     setBookingData(prev => ({
@@ -50,15 +82,18 @@ function BookingContent() {
     if (boatId) {
       setStep(2);
     }
-  }, [searchParams]);
+  }, [searchParams, minNights]);
 
-  const selectedBoat = boats.find(b => b._id === bookingData.boatId);
+  const selectedBoat = boats.find(b => b.id === bookingData.boatId);
   
-  const totalDays = bookingData.checkIn && bookingData.checkOut
-    ? Math.ceil((new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) / (1000 * 60 * 60 * 24))
+  // Calculate days and nights correctly
+  // 0 nights = same day (check-in and check-out same date)
+  // 1 night = next day (check-in: 1/1/26, check-out: 2/1/26)
+  const totalNights = bookingData.checkIn && bookingData.checkOut
+    ? Math.max(0, Math.ceil((new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) / (1000 * 60 * 60 * 24)))
     : 0;
   
-  const totalNights = Math.max(0, totalDays - 1);
+  const totalDays = totalNights + 1; // Days is always nights + 1
 
   // Meal calculation: days * 2 + nights * 1
   const totalMeals = totalDays > 0 ? (totalDays * 2 + totalNights * 1) : 0;
@@ -76,6 +111,44 @@ function BookingContent() {
     setStep(2);
   };
 
+  // Fetch availability automatically when dates/boat change
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      // Only fetch if we have valid boat and future dates
+      if (bookingData.boatId && bookingData.checkIn && bookingData.checkOut) {
+        // Debounce or just fetch. Since user picks date, it's fine to fetch.
+        setCheckingAvailability(true);
+        try {
+          const res = await bookingsService.checkAvailability(
+            bookingData.boatId,
+            bookingData.checkIn,
+            bookingData.checkOut
+          );
+          if (res.success && res.data) {
+            setAvailability(res.data);
+            
+            // Clear invalid selections if quantity exceeds available
+            setBookingData(prev => {
+              const validRooms = prev.rooms.map(room => {
+                const avail = res.data![room.type]?.available || 0;
+                return { ...room, quantity: Math.min(room.quantity, avail) };
+              }).filter(r => r.quantity > 0);
+              
+              return { ...prev, rooms: validRooms };
+            });
+          }
+        } catch (err) {
+          console.error("Failed to check availability", err);
+          // Don't toast error on every change, just log it.
+        } finally {
+          setCheckingAvailability(false);
+        }
+      }
+    };
+
+    fetchAvailability();
+  }, [bookingData.boatId, bookingData.checkIn, bookingData.checkOut]);
+
   const handleRoomChange = (roomType: string, quantity: number) => {
     setBookingData(prev => {
       const existingRooms = prev.rooms.filter(r => r.type !== roomType);
@@ -86,34 +159,40 @@ function BookingContent() {
     });
   };
 
-  const handleDestinationToggle = (destination: string) => {
-    setBookingData(prev => {
-      const selected = prev.selectedDestinations;
-      if (selected.includes(destination)) {
-        return { ...prev, selectedDestinations: selected.filter(d => d !== destination) };
-      } else if (selected.length < 5) {
-        return { ...prev, selectedDestinations: [...selected, destination] };
-      }
-      return prev;
-    });
-  };
-
   const handleSubmit = async () => {
-    // Simulate processing
-    const btn = document.querySelector('button[type="button"]'); // This is a bit hacky for a demo
-    console.log('Booking Data:', bookingData);
-    
-    // In actual app, this would be an API call
-    setTimeout(() => {
-      router.push('/payment/success');
-    }, 1500);
+    if (!isAuthenticated) {
+      warning('Please login to complete your booking.');
+      router.push('/login?redirect=/booking');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response: { data?: BookingWithDetails } = await bookingsService.createBooking({
+        boatId: bookingData.boatId,
+        roomsBooked: bookingData.rooms,
+        dates: { checkIn: bookingData.checkIn, checkOut: bookingData.checkOut },
+        pax: bookingData.passengers,
+        places: ["Tanguar Haor (All Sites)"], // Default all destinations
+      });
+
+      success('Booking created! Redirecting to payment...');
+
+      // Redirect to payment page with booking ID
+      const bookingId = response.data?.id;
+      router.push(bookingId ? `/payment?bookingId=${bookingId}` : '/payment');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to create booking';
+      toastError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const canProceed = () => {
     if (step === 1) return !!bookingData.boatId;
-    if (step === 2) return bookingData.checkIn && bookingData.checkOut && totalDays >= 2;
+    if (step === 2) return bookingData.checkIn && bookingData.checkOut && totalNights >= minNights;
     if (step === 3) return bookingData.rooms.length > 0;
-    if (step === 4) return bookingData.selectedDestinations.length === 5;
     return true;
   };
 
@@ -132,19 +211,19 @@ function BookingContent() {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Progress Steps */}
+        {/* Progress Steps - Now 4 steps instead of 5 */}
         <div className="mb-12 overflow-x-auto pb-4 scrollbar-hide">
           <div className="min-w-[600px] max-w-4xl mx-auto px-4">
             <div className="flex items-center justify-between">
-              {[1, 2, 3, 4, 5].map((s) => (
+              {[1, 2, 3, 4].map((s) => (
                 <div key={s} className="flex items-center">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                     step >= s ? 'bg-luxury-500 text-white' : 'bg-gray-300 text-gray-600'
                   }`}>
                     {s}
                   </div>
-                  {s < 5 && (
-                    <div className={`w-16 h-1 ${step > s ? 'bg-luxury-500' : 'bg-gray-300'}`} />
+                  {s < 4 && (
+                    <div className={`w-24 h-1 ${step > s ? 'bg-luxury-500' : 'bg-gray-300'}`} />
                   )}
                 </div>
               ))}
@@ -153,8 +232,7 @@ function BookingContent() {
               <span className={step >= 1 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Boat</span>
               <span className={step >= 2 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Dates</span>
               <span className={step >= 3 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Rooms</span>
-              <span className={step >= 4 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Places</span>
-              <span className={step >= 5 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Review</span>
+              <span className={step >= 4 ? 'text-luxury-600 font-semibold' : 'text-gray-500'}>Review</span>
             </div>
           </div>
         </div>
@@ -169,10 +247,10 @@ function BookingContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {boats.map((boat) => (
                     <Card
-                      key={boat._id}
-                      luxury={bookingData.boatId === boat._id}
+                      key={boat.id}
+                      luxury={bookingData.boatId === boat.id}
                       hover
-                      onClick={() => handleBoatSelect(boat._id)}
+                      onClick={() => handleBoatSelect(boat.id)}
                       className="cursor-pointer"
                     >
                       <div className="relative h-48">
@@ -221,8 +299,8 @@ function BookingContent() {
                     </div>
                     {totalDays > 0 && (
                       <div className="bg-luxury-50 p-4 rounded-lg">
-                        <p className="text-luxury-900 font-semibold">Total: {totalDays} days / {totalDays - 1} nights</p>
-                        {totalDays < 2 && <p className="text-red-600 text-sm mt-1">Minimum 2 days required</p>}
+                        <p className="text-luxury-900 font-semibold">Total: {totalDays} days / {totalNights} nights</p>
+                        {totalNights < minNights && <p className="text-red-600 text-sm mt-1">Minimum {minNights} night{minNights > 1 ? 's' : ''} required</p>}
                       </div>
                     )}
                   </div>
@@ -233,19 +311,44 @@ function BookingContent() {
             {/* Step 3: Select Rooms */}
             {step === 3 && selectedBoat && (
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Select Rooms</h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Select Rooms</h2>
+                  {checkingAvailability && (
+                    <span className="text-xs font-semibold text-luxury-600 bg-luxury-50 px-3 py-1 rounded-full animate-pulse">
+                      Updating availability...
+                    </span>
+                  )}
+                </div>
+                
                 <div className="space-y-4">
-                  {selectedBoat.rooms.map((room, idx) => {
+                  {selectedBoat.rooms && Array.isArray(selectedBoat.rooms) && selectedBoat.rooms.map((room, idx) => {
                     const selected = bookingData.rooms.find(r => r.type === room.type);
                     const quantity = selected?.quantity || 0;
                     
+                    // Use dynamic availability
+                    const roomAvail = availability[room.type];
+                    // If fetching, assume available (unless we have old data showing sold out)
+                    // If roomAvail exists, use it. Else fallback to total count.
+                    const availableCount = roomAvail ? roomAvail.available : room.count;
+                    const isSoldOut = availableCount <= 0;
+
                     return (
                       <Card key={idx} luxury={quantity > 0}>
                         <div className="p-6">
                           <div className="flex justify-between items-start mb-4">
                             <div>
-                              <h3 className="font-bold text-lg text-gray-900">{room.type}</h3>
-                              <p className="text-sm text-gray-600">Up to {room.maxPax} guests • {room.count} available</p>
+                              <div className="flex items-center gap-3 mb-1">
+                                <h3 className="font-bold text-lg text-gray-900">{room.type}</h3>
+                                {isSoldOut && (
+                                  <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded">SOLD OUT</span>
+                                )}
+                                {!isSoldOut && roomAvail && (
+                                  <span className={`${availableCount <= 2 ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'} text-xs font-bold px-2 py-1 rounded`}>
+                                    {availableCount} left
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600">Up to {room.maxPax} guests • {isSoldOut ? 'No rooms available' : `${availableCount} available for your dates`}</p>
                               <div className="flex gap-2 mt-2">
                                 {room.attachBath && (
                                   <span className="text-xs bg-luxury-100 text-luxury-700 px-2 py-1 rounded">Attached Bath</span>
@@ -258,14 +361,16 @@ function BookingContent() {
                             <div className="flex items-center gap-3">
                               <button
                                 onClick={() => handleRoomChange(room.type, Math.max(0, quantity - 1))}
-                                className="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                                disabled={quantity === 0}
+                                className="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-bold text-gray-600"
                               >
                                 -
                               </button>
-                              <span className="text-xl font-bold w-8 text-center">{quantity}</span>
+                              <span className="text-xl font-bold w-4 text-center">{quantity}</span>
                               <button
-                                onClick={() => handleRoomChange(room.type, Math.min(room.count, quantity + 1))}
-                                className="w-10 h-10 rounded-full bg-luxury-500 hover:bg-luxury-600 text-white flex items-center justify-center"
+                                onClick={() => handleRoomChange(room.type, quantity + 1)}
+                                disabled={quantity >= availableCount}
+                                className="w-10 h-10 rounded-full bg-luxury-600 hover:bg-luxury-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white flex items-center justify-center font-bold"
                               >
                                 +
                               </button>
@@ -275,50 +380,15 @@ function BookingContent() {
                       </Card>
                     );
                   })}
+                  {(!selectedBoat.rooms || selectedBoat.rooms.length === 0) && (
+                    <p className="text-gray-500 text-center py-8">No rooms available for this boat.</p>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Step 4: Select Destinations */}
+            {/* Step 4: Review & Confirm */}
             {step === 4 && (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Choose 5 Destinations</h2>
-                <p className="text-gray-600 mb-6">Selected: {bookingData.selectedDestinations.length}/5</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {destinations.map((dest) => {
-                    const isSelected = bookingData.selectedDestinations.includes(dest.name);
-                    
-                    return (
-                      <Card
-                        key={dest.name}
-                        luxury={isSelected}
-                        hover
-                        onClick={() => handleDestinationToggle(dest.name)}
-                        className="cursor-pointer"
-                      >
-                        <div className="relative h-32">
-                          <Image src={dest.images[0]} alt={dest.name} fill className="object-cover" />
-                          {isSelected && (
-                            <div className="absolute top-2 right-2 w-8 h-8 bg-luxury-500 rounded-full flex items-center justify-center">
-                              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-4">
-                          <h3 className="font-bold">{dest.name}</h3>
-                          <p className="text-xs text-gray-600 line-clamp-2">{dest.description}</p>
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Step 5: Review & Confirm */}
-            {step === 5 && (
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Review Your Booking</h2>
                 <Card luxury>
@@ -337,15 +407,10 @@ function BookingContent() {
                         <p key={idx}>{room.type} × {room.quantity}</p>
                       ))}
                     </div>
-                    <div>
-                      <h3 className="font-bold text-lg mb-2">Destinations</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {bookingData.selectedDestinations.map(dest => (
-                          <span key={dest} className="bg-secondary-100 text-secondary-700 px-3 py-1 rounded-full text-sm">
-                            {dest}
-                          </span>
-                        ))}
-                      </div>
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <p className="text-sm text-blue-700">
+                        <strong>Note:</strong> All destinations in Tanguar Haor will be visited during your trip.
+                      </p>
                     </div>
                   </div>
                 </Card>
@@ -362,7 +427,7 @@ function BookingContent() {
                   Back
                 </Button>
               )}
-              {step < 5 ? (
+              {step < 4 ? (
                 <Button
                   onClick={() => setStep(step + 1)}
                   variant="secondary"
@@ -372,8 +437,8 @@ function BookingContent() {
                   Continue
                 </Button>
               ) : (
-                <Button onClick={handleSubmit} variant="secondary" className="ml-auto">
-                  Proceed to Payment
+                <Button onClick={handleSubmit} variant="secondary" className="ml-auto" disabled={isSubmitting}>
+                  {isSubmitting ? 'Creating...' : 'Proceed to Payment'}
                 </Button>
               )}
             </div>
@@ -431,4 +496,3 @@ export default function BookingPage() {
     </Suspense>
   );
 }
-

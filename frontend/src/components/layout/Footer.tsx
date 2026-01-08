@@ -63,7 +63,7 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-gray-400 mb-4 max-w-md">
-              Experience the beauty of Bangladesh's pristine waterways aboard our luxury houseboats. 
+              Experience the beauty of Bangladesh&apos;s pristine waterways aboard our luxury houseboats. 
               Discover Tanguar Haor and beyond with comfort, style, and unforgettable memories.
             </p>
             <div className="flex space-x-4">
