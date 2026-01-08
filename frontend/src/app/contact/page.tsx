@@ -3,9 +3,12 @@
 import FAQ from '@/components/home/FAQ';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import { contactService } from '@/lib/services';
+import { useToast } from '@/lib/toast';
 import { useState } from 'react';
 
 export default function ContactPage() {
+  const { success, error: toastError } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -21,15 +24,28 @@ export default function ContactPage() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsSubmitting(false);
-    setSubmitted(true);
-    setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-    
-    setTimeout(() => setSubmitted(false), 5000);
+    try {
+      await contactService.submitForm({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || undefined,
+        message: formData.message,
+        subject: formData.subject || undefined,
+      });
+      
+      success('Message sent! We\'ll get back to you as soon as possible.');
+      
+      setSubmitted(true);
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to send message';
+      toastError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
@@ -91,7 +107,7 @@ export default function ContactPage() {
             Get In <span className="text-gradient-gold">Touch</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-100 max-w-3xl mx-auto">
-            Have questions about our tours? We're here to help plan your perfect adventure.
+            Have questions about our tours? We&apos;re here to help plan your perfect adventure.
           </p>
         </div>
       </section>
@@ -128,7 +144,7 @@ export default function ContactPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <p className="text-accent-900 font-medium">
-                      Message sent successfully! We'll get back to you soon.
+                      Message sent successfully! We&apos;ll get back to you soon.
                     </p>
                   </div>
                 </div>

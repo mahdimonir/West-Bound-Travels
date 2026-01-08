@@ -2,93 +2,234 @@
 
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useAuth } from '@/lib/AuthContext';
-import { useNotifications } from '@/lib/NotificationContext';
+import { bookingsService, usersService, type BookingWithDetails } from '@/lib/services';
+import { useToast } from '@/lib/toast';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
 function ProfileContent() {
-  const { user, isAuthenticated, logout } = useAuth();
-  const { addNotification } = useNotifications();
+  const { user, isAuthenticated, logout, updateUser } = useAuth();
+  const { success, error: toastError } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'bookings' | 'reviews' | 'gallery'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'bookings' | 'reviews'>('overview');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
-    phone: '+880 1XXX-XXXXXX',
-    bio: 'Avid traveler and houseboat enthusiast. Exploring the hidden gems of Bangladesh.',
+    phone: '',
+    bio: '',
     preferences: {
-      mealType: 'Regular',
+      mealType: '',
       notifications: true,
     }
   });
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const hasLoadedData = useRef(false);
+
+  // Confirmation dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    variant?: 'danger' | 'warning' | 'info';
+    isLoading?: boolean;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    variant: 'warning',
+    isLoading: false,
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/login');
-    } else {
-      setProfileData(prev => ({
-        ...prev,
-        name: user?.name || '',
-        email: user?.email || '',
-      }));
-      
-      const tab = searchParams.get('tab');
-      if (tab && ['overview', 'profile', 'bookings', 'reviews', 'gallery'].includes(tab)) {
-        setActiveTab(tab as any);
-      }
+      return;
     }
-  }, [isAuthenticated, router, user, searchParams]);
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string);
-        addNotification({
-          title: 'Profile Updated',
-          message: 'Your profile picture has been updated successfully.',
-          type: 'success'
-        });
+    
+    // Only fetch data once on initial mount
+    if (!hasLoadedData.current) {
+      // Fetch fresh user data from server - only on initial mount
+      const fetchUserProfile = async () => {
+        try {
+          setLoadingProfile(true);
+          const response = await usersService.getMe();
+          if (response.data) {
+            const userData = response.data;
+            setProfileData({
+              name: userData.name || '',
+              email: userData.email || '',
+              phone: userData.phone || '',
+              bio: userData.bio || '',
+              preferences: {
+                mealType: userData.preferences?.mealType || 'Regular',
+                notifications: userData.preferences?.notifications ?? true,
+              }
+            });
+            
+            // Set avatar if exists
+            if (userData.avatar) {
+              setProfileImage(userData.avatar);
+            }
+            
+            // Update AuthContext with fresh data
+            updateUser(userData);
+          }
+        } catch (error) {
+          console.error('Failed to fetch user profile:', error);
+          toastError('Failed to load profile data');
+        } finally {
+          setLoadingProfile(false);
+        }
       };
-      reader.readAsDataURL(file);
+      
+      fetchUserProfile();
+
+      // Fetch user's bookings
+      const fetchBookings = async () => {
+        try {
+          const response = await bookingsService.getMyBookings();
+          if (response.data) {
+            setBookings(response.data);
+          }
+        } catch (error) {
+          console.warn('Failed to fetch bookings:', error);
+        } finally {
+          setLoadingBookings(false);
+        }
+      };
+      fetchBookings();
+      
+      hasLoadedData.current = true;
+    }
+    
+    // Handle tab from URL (this runs on every searchParams change)
+    const tab = searchParams.get('tab');
+    if (tab && ['overview', 'profile', 'bookings', 'reviews'].includes(tab)) {
+      setActiveTab(tab as typeof activeTab);
+    }
+  }, [isAuthenticated, router, searchParams]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onloadend = () => setProfileImage(reader.result as string);
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    try {
+      const response = await usersService.updateAvatar(file);
+      if (response.data?.avatar) {
+        updateUser({ avatar: response.data.avatar });
+      }
+      success('Your profile picture has been updated successfully.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to upload avatar';
+      toastError(message);
     }
   };
 
   const handleSaveProfile = () => {
-    setIsEditingProfile(false);
-    addNotification({
-      title: 'Profile Updated',
-      message: 'Your personal information has been saved.',
-      type: 'success'
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Save Profile Changes',
+      message: 'Are you sure you want to save these changes to your profile?',
+      variant: 'info',
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          // Update loading state in dialog only
+          setConfirmDialog(prev => ({ ...prev, isLoading: true }));
+          
+          // Save to backend
+          await usersService.updateMe({
+            name: profileData.name,
+            phone: profileData.phone,
+            bio: profileData.bio,
+            preferences: profileData.preferences,
+          });
+          
+          // Silently fetch fresh data from server after successful save (no loading state)
+          const response = await usersService.getMe();
+          if (response.data) {
+            const userData = response.data;
+            setProfileData({
+              name: userData.name || '',
+              email: userData.email || '',
+              phone: userData.phone || '',
+              bio: userData.bio || '',
+              preferences: {
+                mealType: userData.preferences?.mealType || 'Regular',
+                notifications: userData.preferences?.notifications ?? true,
+              }
+            });
+            
+            if (userData.avatar) {
+              setProfileImage(userData.avatar);
+            }
+            
+            // Update AuthContext with fresh data
+            updateUser(userData);
+          }
+          
+          success('Your personal information has been saved.');
+          setIsEditingProfile(false);
+          setConfirmDialog(prev => ({ ...prev, isOpen: false, isLoading: false }));
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to save profile';
+          toastError(message);
+          setConfirmDialog(prev => ({ ...prev, isLoading: false }));
+        }
+      },
     });
   };
 
-  const bookings = [
-    {
-      id: "WBT-7A2B9C",
-      boat: "Blue Wave - AC Luxe",
-      date: "2025-05-15",
-      total: 45000,
-      status: "Upcoming",
-      statusColor: "text-blue-600 bg-blue-50"
-    },
-    {
-      id: "WBT-3D5F1G",
-      boat: "River Pearl - Non-AC Premium",
-      date: "2024-11-10",
-      total: 32000,
-      status: "Completed",
-      statusColor: "text-green-600 bg-green-50"
-    }
-  ];
+  const handleLogout = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Confirm Logout',
+      message: 'Are you sure you want to sign out?',
+      variant: 'warning',
+      onConfirm: () => {
+        logout();
+        router.push('/');
+      },
+    });
+  };
+
+  // Handle tab change with URL update
+  const handleTabChange = (tab: 'overview' | 'profile' | 'bookings' | 'reviews') => {
+    setActiveTab(tab);
+    // Update URL without page reload using Next.js router
+    router.replace(`/profile?tab=${tab}`, { scroll: false });
+  };
+
+  // Format booking for display
+  const getBookingStatusInfo = (status: string) => {
+    const statusMap: Record<string, { text: string; color: string }> = {
+      PENDING: { text: 'Pending Payment', color: 'text-yellow-600 bg-yellow-50' },
+      PAID: { text: 'Paid', color: 'text-green-600 bg-green-50' },
+      CONFIRMED: { text: 'Confirmed', color: 'text-blue-600 bg-blue-50' },
+      COMPLETED: { text: 'Completed', color: 'text-gray-600 bg-gray-50' },
+      CANCELLED: { text: 'Cancelled', color: 'text-red-600 bg-red-50' },
+      REFUNDED: { text: 'Refunded', color: 'text-purple-600 bg-purple-50' },
+    };
+    return statusMap[status] || { text: status, color: 'text-gray-600 bg-gray-50' };
+  };
 
   if (!isAuthenticated) return null;
 
@@ -100,10 +241,11 @@ function ProfileContent() {
           <div className="flex items-center space-x-6">
             <div className="relative group">
               <div className="w-24 h-24 bg-gradient-hero rounded-full flex items-center justify-center text-white text-3xl font-bold border-4 border-white shadow-xl overflow-hidden">
-                {profileImage ? (
-                  <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+                {profileImage || user?.avatar ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={profileImage || user?.avatar || ''} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  user?.name?.[0].toUpperCase()
+                  user?.name?.[0]?.toUpperCase() || 'U'
                 )}
               </div>
               <button 
@@ -124,7 +266,7 @@ function ProfileContent() {
               />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Account Center</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{profileData.name || 'Account Center'}</h1>
               <p className="text-gray-600 mt-1">Manage your identity and travel preferences.</p>
             </div>
           </div>
@@ -132,7 +274,7 @@ function ProfileContent() {
             <Link href="/booking">
               <Button variant="secondary" size="md">New Booking</Button>
             </Link>
-            <Button variant="outline" size="md" onClick={logout} className="border-red-200 text-red-600 hover:bg-red-50">
+            <Button variant="outline" size="md" onClick={handleLogout} className="border-red-200 text-red-600 hover:bg-red-50">
               Sign Out
             </Button>
           </div>
@@ -141,10 +283,10 @@ function ProfileContent() {
         {/* Tab Navigation */}
         <div className="flex overflow-x-auto pb-4 mb-8 scrollbar-hide border-b border-gray-200">
           <div className="flex space-x-8">
-            {['overview', 'bookings', 'profile', 'reviews', 'gallery'].map((tab) => (
+            {['overview', 'bookings', 'profile', 'reviews'].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab as any)}
+                onClick={() => handleTabChange(tab as any)}
                 className={`pb-4 text-sm font-bold capitalize whitespace-nowrap transition-colors relative ${
                   activeTab === tab 
                     ? 'text-primary-600' 
@@ -160,44 +302,51 @@ function ProfileContent() {
           </div>
         </div>
 
+        {/* Loading State - Only in Content Area */}
+        {loadingProfile ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading your profile...</p>
+            </div>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Panel */}
           <div className="lg:col-span-2 space-y-6">
             {activeTab === 'overview' && (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                   <Card className="p-6 bg-primary-50 border-primary-100">
                     <p className="text-primary-700 text-sm font-bold uppercase tracking-wider mb-2">Total Trips</p>
-                    <p className="text-4xl font-black text-primary-900">2</p>
-                  </Card>
-                  <Card className="p-6 bg-secondary-50 border-secondary-100">
-                    <p className="text-secondary-700 text-sm font-bold uppercase tracking-wider mb-2">Miles Traveled</p>
-                    <p className="text-4xl font-black text-secondary-900">145</p>
-                  </Card>
-                  <Card className="p-6 bg-accent-50 border-accent-100">
-                    <p className="text-accent-700 text-sm font-bold uppercase tracking-wider mb-2">Reviews</p>
-                    <p className="text-4xl font-black text-accent-900">0</p>
+                    <p className="text-4xl font-black text-primary-900">{bookings.length}</p>
                   </Card>
                 </div>
 
                 <Card className="p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-6">Recent Booking</h3>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center text-primary-600 shadow-sm border border-gray-100">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                        </svg>
+                  {loadingBookings ? (
+                    <p className="text-gray-500">Loading bookings...</p>
+                  ) : bookings.length > 0 ? (
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center text-primary-600 shadow-sm border border-gray-100">
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">{bookings[0].boat?.name}</p>
+                          <p className="text-sm text-gray-500">ID: {bookings[0].id} • {new Date(bookings[0].checkIn).toLocaleDateString()}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-gray-900">{bookings[0].boat}</p>
-                        <p className="text-sm text-gray-500">ID: {bookings[0].id} • May 15, 2025</p>
-                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getBookingStatusInfo(bookings[0].status).color}`}>
+                        {getBookingStatusInfo(bookings[0].status).text}
+                      </span>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${bookings[0].statusColor}`}>
-                      {bookings[0].status}
-                    </span>
-                  </div>
+                  ) : (
+                    <p className="text-gray-500">No bookings yet. <Link href="/booking" className="text-primary-600 hover:underline">Book your first trip!</Link></p>
+                  )}
                 </Card>
               </>
             )}
@@ -213,23 +362,55 @@ function ProfileContent() {
                       <tr>
                         <th className="px-6 py-4">Boat / Service</th>
                         <th className="px-6 py-4">Date</th>
+                        <th className="px-6 py-4">Rooms</th>
                         <th className="px-6 py-4">Amount</th>
                         <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {bookings.map(b => (
-                        <tr key={b.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4 font-bold text-gray-900">{b.boat}</td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{b.date}</td>
-                          <td className="px-6 py-4 font-bold">৳{b.total.toLocaleString()}</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${b.statusColor}`}>
-                              {b.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      {loadingBookings ? (
+                        <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500">Loading...</td></tr>
+                      ) : bookings.length === 0 ? (
+                        <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500">No bookings found</td></tr>
+                      ) : bookings.map(booking => {
+                        const statusInfo = getBookingStatusInfo(booking.status);
+                        return (
+                          <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-4">
+                              <div>
+                                <p className="font-bold text-gray-900">{booking.boat?.name || 'Unknown'}</p>
+                                {booking.transactionId && (
+                                  <p className="text-xs text-gray-500">Txn: {booking.transactionId}</p>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600">
+                              {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600">
+                              {booking.roomsBooked.map((r, i) => (
+                                <div key={i}>{r.type} × {r.quantity}</div>
+                              ))}
+                            </td>
+                            <td className="px-6 py-4 font-bold">৳{Number(booking.totalPrice || booking.price || 0).toLocaleString()}</td>
+                            <td className="px-6 py-4">
+                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusInfo.color}`}>
+                                {statusInfo.text}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              {booking.status === 'PENDING' && (
+                                <Link href={`/payment?bookingId=${booking.id}`}>
+                                  <Button size="sm" variant="secondary" className="text-xs">
+                                    Complete Payment
+                                  </Button>
+                                </Link>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -281,7 +462,7 @@ function ProfileContent() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Prefered Meal Type</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Preferred Meal Type</label>
                       <select 
                         disabled={!isEditingProfile}
                         value={profileData.preferences.mealType}
@@ -294,6 +475,34 @@ function ProfileContent() {
                       </select>
                     </div>
                   </div>
+                  
+                  {/* Notification Preferences */}
+                  <div className="border-t border-gray-200 pt-6 mt-6">
+                    <h4 className="text-lg font-bold text-gray-900 mb-4">Preferences</h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700">Email Notifications</label>
+                          <p className="text-xs text-gray-500 mt-1">Receive booking updates and special offers via email</p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={!isEditingProfile}
+                          onClick={() => setProfileData({...profileData, preferences: { ...profileData.preferences, notifications: !profileData.preferences.notifications }})}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 ${
+                            profileData.preferences.notifications ? 'bg-primary-600' : 'bg-gray-300'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              profileData.preferences.notifications ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">About You (Bio)</label>
                     <textarea 
@@ -306,7 +515,9 @@ function ProfileContent() {
                   </div>
                   {isEditingProfile && (
                     <div className="pt-4">
-                      <Button variant="primary" onClick={handleSaveProfile}>Save Changes</Button>
+                      <Button variant="primary" onClick={handleSaveProfile}>
+                        Save Changes
+                      </Button>
                     </div>
                   )}
                 </form>
@@ -343,26 +554,6 @@ function ProfileContent() {
                 </div>
               </Card>
             )}
-
-            {activeTab === 'gallery' && (
-              <Card className="p-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Upload Trip Photos</h3>
-                <div className="border-4 border-dashed border-gray-200 rounded-2xl p-12 text-center hover:border-primary-300 transition-colors cursor-pointer">
-                  <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4 text-primary-600">
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <p className="text-lg font-bold text-gray-900">Drop your photos here</p>
-                  <p className="text-gray-500 mt-2">or click to browse your files (JPEG, PNG up to 10MB)</p>
-                </div>
-                <div className="mt-8 grid grid-cols-3 gap-4">
-                  <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 border border-gray-200">
-                    Placeholder
-                  </div>
-                </div>
-              </Card>
-            )}
           </div>
 
           {/* Sidebar */}
@@ -389,7 +580,19 @@ function ProfileContent() {
             </Card>
           </div>
         </div>
+        )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        variant={confirmDialog.variant}
+        isLoading={confirmDialog.isLoading}
+      />
     </div>
   );
 }
@@ -401,4 +604,3 @@ export default function ProfilePage() {
     </Suspense>
   );
 }
-

@@ -1,0 +1,196 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  password      String
+  role          Role           @default(CUSTOMER)
+  isVerified    Boolean        @default(false)
+  avatar        String?
+  bio           String?
+  phone         String?
+  preferences   Json?
+  bookings      Booking[]
+  notifications Notification[]
+  reviews       Review[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Boat {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  type        BoatType
+  images      String[]
+  isActive    Boolean   @default(true)
+  rooms       Json
+  totalRooms  Int       @default(7)
+  description String?
+  features    String[]
+  bookings    Booking[]
+  reviews     Review[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  userId        String
+  boatId        String
+  checkIn       DateTime
+  checkOut      DateTime
+  pax           Int
+  roomsBooked   Json
+  places        String[]
+  totalPrice    Decimal
+  status        BookingStatus @default(PENDING)
+  paymentId     String?
+  transactionId String?
+  paymentMethod String?
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
+  boat          Boat          @relation(fields: [boatId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
+  review        Review?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([boatId, checkIn, checkOut])
+  @@index([userId, status])
+  @@index([status, checkOut])
+  @@index([transactionId])
+}
+
+model Destination {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  images      String[]
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  boatId    String
+  userId    String
+  rating    Int
+  comment   String
+  status    ReviewStatus  @default(PENDING)
+  bookingId String   @unique
+  boat      Boat     @relation(fields: [boatId], references: [id])
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Gallery {
+  id        String   @id @default(cuid())
+  src       String
+  alt       String?
+  category  GalleryCategory
+  createdAt DateTime @default(now())
+}
+
+model Blog {
+  id         String   @id @default(cuid())
+  title      String
+  slug       String   @unique
+  excerpt    String
+  content    String
+  coverImage String?
+  images     String[]
+  status     BlogStatus @default(DRAFT)
+  tags       String[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model OTP {
+  id        String   @id @default(cuid())
+  email     String   @unique 
+  code      String
+  type      OTPType
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+  tempName      String?
+  tempPassword  String? 
+  tempPhone     String?
+
+  @@index([email, type])
+}
+
+model Settings {
+  id                  String   @id @default(cuid())
+  key                 String   @unique
+  value               String
+  description         String?
+  updatedBy           String?
+  updatedAt           DateTime @updatedAt
+  createdAt           DateTime @default(now())
+}
+
+enum OTPType {
+  REGISTRATION
+  PASSWORD_RESET
+}
+
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  MODERATOR
+}
+
+enum BoatType {
+  AC
+  NON_AC
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  PAID
+  CANCELLED
+  REFUNDED
+  COMPLETED
+}
+
+enum GalleryCategory {
+  BOAT
+  DESTINATION
+  NATURE
+  CULCTURE
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISH
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVE
+}
+
+

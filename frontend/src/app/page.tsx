@@ -4,6 +4,8 @@ import FeaturedBoats from "@/components/home/FeaturedBoats";
 import HeroSection from "@/components/home/HeroSection";
 import WhyChooseUs from "@/components/home/WhyChooseUs";
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   return (
     <>

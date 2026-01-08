@@ -1,14 +1,16 @@
 'use client';
 
+import { useNotifications } from '@/hooks/useNotifications';
+import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/lib/AuthContext';
-import { useNotifications } from '@/lib/NotificationContext';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Button from '../ui/Button';
 
-export default function Navbar() {
+
+const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
-  const { notifications, markAllAsRead } = useNotifications();
+  const { notifications, mutate } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
@@ -16,6 +18,16 @@ export default function Navbar() {
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markAllAsRead = async () => {
+    try {
+      await apiClient.post('/notifications/mark-all-read');
+      // Optimistically update the UI
+      mutate();
+    } catch (error) {
+      console.error('Failed to mark notifications as read:', error);
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -130,7 +142,12 @@ export default function Navbar() {
                     className="flex items-center space-x-3 p-1 rounded-full hover:bg-gray-100 transition border border-transparent hover:border-gray-200"
                   >
                     <div className="w-10 h-10 rounded-full bg-gradient-hero flex items-center justify-center text-white font-bold ring-2 ring-primary-50 border-2 border-white overflow-hidden relative">
-                      {user?.name?.[0].toUpperCase()}
+                      {user?.avatar ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        user?.name?.[0]?.toUpperCase() || 'U'
+                      )}
                     </div>
                   </button>
 
@@ -147,7 +164,7 @@ export default function Navbar() {
                       
                       {/* Menu Links */}
                       <div className="p-2 space-y-1">
-                        {(user?.role === 'admin' || user?.role === 'moderator') && (
+                        {(user?.role === 'ADMIN' || user?.role === 'MODERATOR') && (
                           <Link 
                             href="/dashboard"
                             className="flex items-center space-x-3 px-3 py-2 text-sm font-bold text-luxury-900 hover:bg-primary-50 rounded-lg transition"
@@ -188,16 +205,6 @@ export default function Navbar() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                           <span>My Reviews</span>
-                        </Link>
-                        <Link 
-                          href="/profile?tab=gallery"
-                          className="flex items-center space-x-3 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-primary-50 rounded-lg transition"
-                          onClick={() => setShowProfileDropdown(false)}
-                        >
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span>My Images</span>
                         </Link>
                         <div className="border-t border-gray-100 my-1"></div>
                         <button 
@@ -263,8 +270,13 @@ export default function Navbar() {
               {isAuthenticated ? (
                 <div className="space-y-4">
                   <div className="flex items-center space-x-4 px-3 py-2 bg-gray-50 rounded-xl">
-                    <div className="w-12 h-12 rounded-full bg-gradient-hero flex items-center justify-center text-white font-bold">
-                      {user?.name?.[0].toUpperCase()}
+                    <div className="w-12 h-12 rounded-full bg-gradient-hero flex items-center justify-center text-white font-bold overflow-hidden">
+                      {user?.avatar ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        user?.name?.[0]?.toUpperCase() || 'U'
+                      )}
                     </div>
                     <div>
                       <p className="font-bold text-gray-900">{user?.name}</p>
@@ -294,7 +306,7 @@ export default function Navbar() {
                     </Link>
                   </div>
                   <div className="space-y-1">
-                    {(user?.role === 'admin' || user?.role === 'moderator') && (
+                    {(user?.role === 'ADMIN' || user?.role === 'MODERATOR') && (
                       <Link 
                         href="/dashboard"
                         className="block px-3 py-2 rounded-lg text-base font-bold text-primary-600 hover:bg-primary-50"
@@ -330,3 +342,5 @@ export default function Navbar() {
     </nav>
   );
 }
+
+export default React.memo(Navbar);

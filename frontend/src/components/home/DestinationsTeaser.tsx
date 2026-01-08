@@ -1,11 +1,30 @@
-import destinationsData from '@/data/destinations.json';
+"use client";
+
+import { destinationsService } from '@/lib/services';
 import { Destination } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import Button from '../ui/Button';
 
 export default function DestinationsTeaser() {
-  const destinations: Destination[] = destinationsData;
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDestinations = async () => {
+      try {
+        const res = await destinationsService.getAll();
+        if (res.data) setDestinations(res.data);
+      } catch (err) {
+        console.error('Failed to fetch destinations teaser:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDestinations();
+  }, []);
+
   const featured = destinations.slice(0, 4); // Show 4 destinations
 
   return (
@@ -83,7 +102,7 @@ export default function DestinationsTeaser() {
             Ready to Start Your Adventure?
           </h3>
           <p className="text-lg mb-8 max-w-2xl mx-auto opacity-90">
-            Book your houseboat journey today and experience the magic of Bangladesh's waterways. 
+            Book your houseboat journey today and experience the magic of Bangladesh&apos;s waterways. 
             Minimum 2 days, 1 night with 5 premium meals included.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
