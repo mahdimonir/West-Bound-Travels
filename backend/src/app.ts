@@ -3,6 +3,7 @@ import express from "express";
 import helmet from "helmet";
 import path from "path";
 import swaggerUi from "swagger-ui-express";
+import pkg from "../package.json";
 import authRoutes from "./features/auth/auth.routes.js";
 import blogRouter from "./features/blog/blog.routes.js";
 import boatRoutes from "./features/boats/boats.routes.js";
@@ -72,6 +73,19 @@ app.use("/api/v1/contact", contactRoutes);
 app.use("/api/v1/payments", paymentRoutes);
 app.use("/api/v1/gallery", galleryRoutes);
 app.use("/api/v1/settings", settingsRoutes);
+
+// Root Route
+app.get("/", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "Welcome to West Bound Travels API",
+    version: pkg.version,
+    description: pkg.description,
+    documentation: `${req.protocol}://${req.get("host")}/api-docs`,
+    health_check: `${req.protocol}://${req.get("host")}/api/v1/health`,
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Health Check
 app.get("/api/v1/health", (req, res) => {
