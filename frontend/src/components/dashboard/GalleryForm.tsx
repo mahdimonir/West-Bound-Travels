@@ -59,14 +59,20 @@ export default function GalleryForm({ onSave, onCancel, isSaving = false }: Gall
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Alt Text *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Caption (Alt Text) *
+        </label>
         <input
           type="text"
           value={formData.alt}
           onChange={(e) => setFormData({ ...formData, alt: e.target.value })}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-          placeholder="e.g. Tanguar Haor wetland"
+          placeholder="e.g. Tanguar Haor wetland at sunrise"
+          required
         />
+        <p className="text-xs text-gray-500 mt-1">
+          This caption will be used as alt text for accessibility and displayed in the gallery.
+        </p>
       </div>
 
       <div>

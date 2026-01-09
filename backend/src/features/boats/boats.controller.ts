@@ -26,7 +26,15 @@ export class BoatController {
 
   static async createBoat(req: Request, res: Response, next: NextFunction) {
     try {
-      const boat = await BoatService.createBoat(req.body);
+      // Parse JSON fields from multipart form data
+      const parsedBody = {
+        ...req.body,
+        features: req.body.features ? JSON.parse(req.body.features) : [],
+        rooms: req.body.rooms ? JSON.parse(req.body.rooms) : [],
+        totalRooms: req.body.totalRooms ? parseInt(req.body.totalRooms) : 7,
+      };
+      
+      const boat = await BoatService.createBoat(parsedBody);
       res.status(201).json({ success: true, data: boat });
     } catch (error) {
       next(error);
@@ -35,7 +43,15 @@ export class BoatController {
 
   static async updateBoat(req: Request, res: Response, next: NextFunction) {
     try {
-      const boat = await BoatService.updateBoat(req.params.id, req.body);
+      // Parse JSON fields from multipart form data
+      const parsedBody = {
+        ...req.body,
+        features: req.body.features ? JSON.parse(req.body.features) : undefined,
+        rooms: req.body.rooms ? JSON.parse(req.body.rooms) : undefined,
+        totalRooms: req.body.totalRooms ? parseInt(req.body.totalRooms) : undefined,
+      };
+      
+      const boat = await BoatService.updateBoat(req.params.id, parsedBody);
       res.json({ success: true, data: boat });
     } catch (error) {
       next(error);
