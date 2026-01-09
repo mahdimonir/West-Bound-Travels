@@ -51,12 +51,15 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand Column */}
           <div className="col-span-1 lg:col-span-2">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-hero rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
+            <div className="flex items-center space-x-3 mb-4 group">
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/West-Bound-Travels-icon.png" 
+                alt="West Bound Travels Logo" 
+                className="w-full h-full object-contain"
+              />
+            </div>
               <div>
                 <h3 className="text-xl font-bold text-gradient-primary">West Bound Travels</h3>
                 <p className="text-sm text-gray-400">Explore Luxury Waters</p>

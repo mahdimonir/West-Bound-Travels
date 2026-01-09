@@ -2,394 +2,227 @@
   "openapi": "3.0.0",
   "info": {
     "title": "West Bound Travels API",
+    "description": "Comprehensive REST API for West Bound Travels - Luxury Houseboat Tours in Bangladesh",
     "version": "1.0.0",
-    "description": "RESTful API for West Bound Travels - Luxury Houseboat Booking System",
     "contact": {
-      "name": "API Support",
-      "email": "mahdimoniruzzaman@gmail.com"
+      "name": "West Bound Travels",
+      "email": "info@westboundtravels.com",
+      "url": "https://west-bound-travels.vercel.app"
     }
   },
   "servers": [
     {
-      "url": "http://localhost:8000/api/v1",
-      "description": "Development server"
+      "url": "https://west-bound-travels-backend.vercel.app/api/v1",
+      "description": "Production server"
     },
     {
-      "url": "https://api.westboundtravels.com/api/v1",
-      "description": "Production server"
+      "url": "http://localhost:8000/api/v1",
+      "description": "Development server"
     }
   ],
-  "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
+  "tags": [
+    { "name": "Authentication", "description": "User authentication and registration" },
+    { "name": "Users", "description": "User profile and administration" },
+    { "name": "Boats", "description": "Boat/houseboat management" },
+    { "name": "Destinations", "description": "Destination management" },
+    { "name": "Bookings", "description": "Booking management and availability" },
+    { "name": "Blogs", "description": "Blog post management" },
+    { "name": "Gallery", "description": "Image gallery management" },
+    { "name": "Reviews", "description": "Customer review management" },
+    { "name": "Payments", "description": "Payment processing (bKash & SSLCommerz)" },
+    { "name": "Contact", "description": "Contact form submission" },
+    { "name": "Notifications", "description": "User notifications" },
+    { "name": "Settings", "description": "Application settings" }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Register a new user",
+        "description": "Creates a new user account and sends OTP for verification",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password"],
+                "properties": {
+                  "name": { "type": "string", "example": "John Doe" },
+                  "email": { "type": "string", "format": "email", "example": "john@example.com" },
+                  "password": { "type": "string", "format": "password", "minLength": 6, "example": "password123" },
+                  "phone": { "type": "string", "example": "+880 1711-234567" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User registered successfully, OTP sent" },
+          "400": { "description": "Validation error or user already exists" },
+          "429": { "description": "Too many requests" }
+        }
       }
     },
-    "schemas": {
-      "Error": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": false
-          },
-          "message": {
-            "type": "string",
-            "example": "Error message"
-          }
-        }
-      },
-      "SuccessResponse": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
-          },
-          "data": {
-            "type": "object"
-          }
-        }
-      },
-      "AuthResponse": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "user": {
-                "$ref": "#/components/schemas/User"
-              },
-              "token": {
-                "type": "string"
+    "/auth/register/verify": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Verify registration OTP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "otp"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "otp": { "type": "string", "example": "123456" }
+                }
               }
             }
           }
+        },
+        "responses": {
+          "200": { "description": "Email verified successfully" },
+          "400": { "description": "Invalid or expired OTP" }
         }
-      },
-      "User": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "clxxx123456"
-          },
-          "name": {
-            "type": "string",
-            "example": "John Doe"
-          },
-          "email": {
-            "type": "string",
-            "example": "john@example.com"
-          },
-          "phone": {
-            "type": "string",
-            "nullable": true,
-            "example": "+8801234567890"
-          },
-          "role": {
-            "type": "string",
-            "enum": ["CUSTOMER", "MODERATOR", "ADMIN"],
-            "example": "CUSTOMER"
-          },
-          "isVerified": {
-            "type": "boolean",
-            "example": false
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "Boat": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string",
-            "example": "Luxury Houseboat 1"
-          },
-          "type": {
-            "type": "string",
-            "enum": ["AC", "NON_AC"],
-            "example": "AC"
-          },
-          "images": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "features": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "example": ["WiFi", "Kitchen", "AC"]
-          },
-          "totalRooms": {
-            "type": "integer",
-            "example": 7
-          },
-          "rooms": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": { "type": "string" },
-                "count": { "type": "integer" },
-                "maxPax": { "type": "integer" },
-                "attachBath": { "type": "boolean" },
-                "balcony": { "type": "boolean" }
-              },
-              "example": {
-                "type": "AC with Balcony/Attach Bath",
-                "count": 4,
-                "maxPax": 4,
-                "attachBath": true,
-                "balcony": true
+      }
+    },
+    "/auth/register/resend": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Resend registration OTP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" }
+                }
               }
             }
-          },
-          "description": { "type": "string", "nullable": true },
-          "isActive": {
-            "type": "boolean",
-            "example": true
           }
+        },
+        "responses": {
+          "200": { "description": "OTP resent successfully" },
+          "400": { "description": "User not found or already verified" }
         }
-      },
-      "Booking": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "userId": {
-            "type": "string"
-          },
-          "boatId": {
-            "type": "string"
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "endDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "pax": {
-            "type": "integer",
-            "example": 4
-          },
-          "roomsBooked": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string"
-                },
-                "quantity": {
-                  "type": "integer"
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "format": "password" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "token": { "type": "string" },
+                    "user": { "$ref": "#/components/schemas/User" }
+                  }
                 }
               }
             }
           },
-          "placesVisited": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "minItems": 5,
-            "maxItems": 5
-          },
-          "totalPrice": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "status": {
-            "type": "string",
-            "enum": ["PENDING", "CONFIRMED", "PAID", "CANCELLED", "REFUNDED"],
-            "example": "PENDING"
-          },
-          "paymentId": {
-            "type": "string",
-            "nullable": true
-          },
-          "paymentMethod": {
-            "type": "string",
-            "enum": ["bkash", "sslcommerz"],
-            "nullable": true
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "Review": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "userId": {
-            "type": "string"
-          },
-          "boatId": {
-            "type": "string"
-          },
-          "bookingId": {
-            "type": "string"
-          },
-          "rating": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 5,
-            "example": 5
-          },
-          "comment": {
-            "type": "string",
-            "example": "Amazing experience! Highly recommended."
-          },
-          "isActive": {
-            "type": "boolean",
-            "example": true
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "Notification": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "userId": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string",
-            "example": "Booking Confirmed"
-          },
-          "message": {
-            "type": "string",
-            "example": "Your booking has been confirmed"
-          },
-          "read": {
-            "type": "boolean",
-            "example": false
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "StaticPage": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "slug": {
-            "type": "string",
-            "example": "about-us"
-          },
-          "title": {
-            "type": "string",
-            "example": "About Us"
-          },
-          "content": {
-            "type": "string",
-            "example": "<h1>About West Bound Travels</h1><p>Content here...</p>"
-          },
-          "lastUpdated": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "Destination": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string",
-            "example": "Tanguar Haor"
-          },
-          "description": {
-            "type": "string"
-          },
-          "images": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "Gallery": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "src": { "type": "string" },
-          "alt": { "type": "string", "nullable": true },
-          "category": {
-            "type": "string",
-            "enum": ["BOAT", "DESTINATION", "NATURE", "CULCTURE"]
-          },
-          "createdAt": { "type": "string", "format": "date-time" }
-        }
-      }
-    }
-  },
-  "paths": {
-    "/health": {
-      "get": {
-        "tags": ["Health"],
-        "summary": "Health check endpoint",
-        "responses": {
-          "200": {
-            "description": "Server is healthy"
-          }
+          "401": { "description": "Invalid credentials" }
         }
       }
     },
-    "/gallery": {
-      "get": {
-        "tags": ["Gallery"],
-        "summary": "List gallery items",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+    "/auth/forgot-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Send password reset OTP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" }
+                }
               }
             }
           }
+        },
+        "responses": {
+          "200": { "description": "Reset OTP sent successfully" },
+          "404": { "description": "User not found" }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Reset password with OTP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "otp", "newPassword"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "otp": { "type": "string" },
+                  "newPassword": { "type": "string", "format": "password", "minLength": 6 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password reset successful" },
+          "400": { "description": "Invalid or expired OTP" }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get current user profile",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
         }
       },
-      "post": {
-        "tags": ["Gallery"],
-        "summary": "Create gallery item (admin)",
-        "security": [{ "bearerAuth": [] }],
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update current user profile",
+        "security": [{ "BearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -397,27 +230,167 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "src": { "type": "string" },
-                  "imageLocalPath": { "type": "string" },
-                  "alt": { "type": "string" },
-                  "category": {
-                    "type": "string",
-                    "enum": ["BOAT", "DESTINATION", "NATURE", "CULCTURE"]
-                  }
-                },
-                "required": ["category"]
+                  "name": { "type": "string" },
+                  "phone": { "type": "string" },
+                  "address": { "type": "string" }
+                }
               }
             }
           }
         },
-        "responses": { "201": { "description": "Created" } }
+        "responses": {
+          "200": { "description": "Profile updated successfully" },
+          "401": { "description": "Unauthorized" }
+        }
       }
     },
-    "/gallery/{id}": {
-      "delete": {
-        "tags": ["Gallery"],
-        "summary": "Delete gallery item (admin)",
-        "security": [{ "bearerAuth": [] }],
+    "/users/me/avatar": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Upload user avatar",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "avatar": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Avatar uploaded successfully" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/users/admin/all": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get all users (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of all users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/User" }
+                }
+              }
+            }
+          },
+          "403": { "description": "Forbidden - Admin access required" }
+        }
+      }
+    },
+    "/users/admin/admins": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get all admin users (Admin only)",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "List of admin users" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/users/admin/{userId}/role": {
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Update user role (Admin only)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["role"],
+                "properties": {
+                  "role": { "type": "string", "enum": ["CUSTOMER", "MODERATOR", "ADMIN"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Role updated successfully" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/boats": {
+      "get": {
+        "tags": ["Boats"],
+        "summary": "Get all boats",
+        "description": "Public endpoint with caching",
+        "responses": {
+          "200": {
+            "description": "List of boats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Boat" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Boats"],
+        "summary": "Create a new boat (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "capacity", "pricePerNight"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "capacity": { "type": "integer" },
+                  "pricePerNight": { "type": "number" },
+                  "amenities": { "type": "string", "description": "JSON array" },
+                  "images": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "binary" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Boat created successfully" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/boats/{id}": {
+      "get": {
+        "tags": ["Boats"],
+        "summary": "Get boat by ID",
         "parameters": [
           {
             "name": "id",
@@ -426,14 +399,728 @@
             "schema": { "type": "string" }
           }
         ],
-        "responses": { "200": { "description": "Deleted" } }
+        "responses": {
+          "200": {
+            "description": "Boat details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Boat" }
+              }
+            }
+          },
+          "404": { "description": "Boat not found" }
+        }
+      },
+      "put": {
+        "tags": ["Boats"],
+        "summary": "Update boat (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "capacity": { "type": "integer" },
+                  "pricePerNight": { "type": "number" },
+                  "amenities": { "type": "string" },
+                  "images": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "binary" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Boat updated successfully" },
+          "403": { "description": "Forbidden" }
+        }
+      },
+      "delete": {
+        "tags": ["Boats"],
+        "summary": "Delete boat (Admin only)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Boat deleted successfully" },
+          "403": { "description": "Forbidden" }
+        }
       }
     },
-    "/users/me/avatar": {
+    "/boats/{id}/availability": {
+      "get": {
+        "tags": ["Boats"],
+        "summary": "Check boat availability",
+        "description": "Check if boat is available for given dates",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Availability status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "available": { "type": "boolean" },
+                    "conflicts": { "type": "array", "items": { "type": "object" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/destinations": {
+      "get": {
+        "tags": ["Destinations"],
+        "summary": "Get all destinations",
+        "responses": {
+          "200": {
+            "description": "List of destinations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Destination" }
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
-        "tags": ["Users"],
-        "summary": "Upload or update current user's avatar",
-        "security": [{ "bearerAuth": [] }],
+        "tags": ["Destinations"],
+        "summary": "Create destination (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "location", "description"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "location": { "type": "string" },
+                  "description": { "type": "string" },
+                  "highlights": { "type": "string", "description": "JSON array" },
+                  "images": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "binary" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Destination created successfully" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/destinations/{id}": {
+      "get": {
+        "tags": ["Destinations"],
+        "summary": "Get destination by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Destination details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Destination" }
+              }
+            }
+          },
+          "404": { "description": "Destination not found" }
+        }
+      },
+      "put": {
+        "tags": ["Destinations"],
+        "summary": "Update destination (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "location": { "type": "string" },
+                  "description": { "type": "string" },
+                  "highlights": { "type": "string" },
+                  "images": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "binary" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Destination updated successfully" },
+          "403": { "description": "Forbidden" }
+        }
+      },
+      "delete": {
+        "tags": ["Destinations"],
+        "summary": "Delete destination (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Destination deleted successfully" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/bookings": {
+      "post": {
+        "tags": ["Bookings"],
+        "summary": "Create a new booking",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["boatId", "startDate", "endDate", "guests"],
+                "properties": {
+                  "boatId": { "type": "string" },
+                  "startDate": { "type": "string", "format": "date" },
+                  "endDate": { "type": "string", "format": "date" },
+                  "guests": { "type": "integer", "minimum": 1 },
+                  "destination": { "type": "string" },
+                  "specialRequests": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Booking created successfully" },
+          "400": { "description": "Validation error or boat not available" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/bookings/availability": {
+      "get": {
+        "tags": ["Bookings"],
+        "summary": "Check booking availability",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "boatId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Availability status" }
+        }
+      }
+    },
+    "/bookings/my": {
+      "get": {
+        "tags": ["Bookings"],
+        "summary": "Get user's bookings",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of user bookings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Booking" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings/{id}": {
+      "get": {
+        "tags": ["Bookings"],
+        "summary": "Get booking by ID",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Booking" }
+              }
+            }
+          },
+          "404": { "description": "Booking not found" }
+        }
+      }
+    },
+    "/bookings/admin/all": {
+      "get": {
+        "tags": ["Bookings"],
+        "summary": "Get all bookings (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of all bookings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Booking" }
+                }
+              }
+            }
+          },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/bookings/admin/{id}/status": {
+      "patch": {
+        "tags": ["Bookings"],
+        "summary": "Update booking status (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": { "type": "string", "enum": ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Booking status updated" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/blogs/published": {
+      "get": {
+        "tags": ["Blogs"],
+        "summary": "Get published blog posts",
+        "responses": {
+          "200": {
+            "description": "List of published blogs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Blog" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/blogs/{slug}": {
+      "get": {
+        "tags": ["Blogs"],
+        "summary": "Get blog by slug",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Blog post",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Blog" }
+              }
+            }
+          },
+          "404": { "description": "Blog not found" }
+        }
+      }
+    },
+    "/blogs": {
+      "get": {
+        "tags": ["Blogs"],
+        "summary": "Get all blogs (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "List of all blogs including drafts" },
+          "403": { "description": "Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Blogs"],
+        "summary": "Create blog post (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "content", "slug"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "slug": { "type": "string" },
+                  "content": { "type": "string" },
+                  "excerpt": { "type": "string" },
+                  "author": { "type": "string" },
+                  "tags": { "type": "string", "description": "JSON array" },
+                  "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED"] },
+                  "featuredImage": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Blog created successfully" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/blogs/{id}": {
+      "patch": {
+        "tags": ["Blogs"],
+        "summary": "Update blog post (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "content": { "type": "string" },
+                  "excerpt": { "type": "string" },
+                  "tags": { "type": "string" },
+                  "featuredImage": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Blog updated successfully" },
+          "403": { "description": "Forbidden" }
+        }
+      },
+      "delete": {
+        "tags": ["Blogs"],
+        "summary": "Delete blog post (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Blog deleted successfully" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/blogs/{id}/status": {
+      "patch": {
+        "tags": ["Blogs"],
+        "summary": "Update blog status (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Blog status updated" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/gallery": {
+      "get": {
+        "tags": ["Gallery"],
+        "summary": "Get gallery images",
+        "responses": {
+          "200": {
+            "description": "List of gallery images",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/GalleryItem" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Gallery"],
+        "summary": "Upload gallery image (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["image"],
+                "properties": {
+                  "image": { "type": "string", "format": "binary" },
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "category": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Image uploaded successfully" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/gallery/{id}": {
+      "delete": {
+        "tags": ["Gallery"],
+        "summary": "Delete gallery image (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Image deleted successfully" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/reviews/boat/{boatId}": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Get reviews for a boat",
+        "parameters": [
+          {
+            "name": "boatId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of boat reviews",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Review" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reviews": {
+      "post": {
+        "tags": ["Reviews"],
+        "summary": "Create a review",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["boatId", "rating", "comment"],
+                "properties": {
+                  "boatId": { "type": "string" },
+                  "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+                  "comment": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Review created successfully" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/reviews/me": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Get user's reviews",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of user reviews",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Review" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reviews/{id}": {
+      "put": {
+        "tags": ["Reviews"],
+        "summary": "Update review",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -441,1218 +1128,573 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "imageLocalPath": { "type": "string" },
-                  "imageUrl": { "type": "string" }
+                  "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+                  "comment": { "type": "string" }
                 }
               }
-            }
-          },
-          "responses": { "200": { "description": "OK" } }
-        }
-      },
-      "/auth/register": {
-        "post": {
-          "tags": ["Authentication"],
-          "summary": "Register a new user",
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["name", "email", "password"],
-                  "properties": {
-                    "name": {
-                      "type": "string",
-                      "minLength": 2,
-                      "example": "John Doe"
-                    },
-                    "email": {
-                      "type": "string",
-                      "format": "email",
-                      "example": "john@example.com"
-                    },
-                    "password": {
-                      "type": "string",
-                      "minLength": 6,
-                      "example": "password123"
-                    },
-                    "phone": {
-                      "type": "string",
-                      "example": "+8801234567890"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "responses": {
-            "201": {
-              "description": "User registered successfully"
-            },
-            "400": {
-              "description": "Bad request"
-            }
-          }
-        }
-      },
-      "/auth/login": {
-        "post": {
-          "tags": ["Authentication"],
-          "summary": "Login user",
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["email", "password"],
-                  "properties": {
-                    "email": {
-                      "type": "string",
-                      "format": "email",
-                      "example": "john@example.com"
-                    },
-                    "password": {
-                      "type": "string",
-                      "example": "password123"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "Login successful"
-            },
-            "401": {
-              "description": "Invalid credentials"
-            }
-          }
-        }
-      },
-      "/users/me": {
-        "get": {
-          "tags": ["Users"],
-          "summary": "Get current user profile",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "User profile"
-            },
-            "401": {
-              "description": "Unauthorized"
             }
           }
         },
-        "put": {
-          "tags": ["Users"],
-          "summary": "Update current user profile",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "requestBody": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "phone": {
-                      "type": "string"
-                    },
-                    "bio": {
-                      "type": "string"
-                    },
-                    "preferences": {
-                      "type": "object"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "Profile updated"
-            }
-          }
+        "responses": {
+          "200": { "description": "Review updated successfully" },
+          "403": { "description": "Can only update own reviews" }
         }
       },
-      "/users/admin/all": {
-        "get": {
-          "tags": ["Users", "Admin"],
-          "summary": "Get all users (Admin only)",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "parameters": [
-            {
-              "name": "limit",
-              "in": "query",
-              "schema": {
-                "type": "integer",
-                "example": 10
-              }
-            },
-            {
-              "name": "offset",
-              "in": "query",
-              "schema": {
-                "type": "integer",
-                "example": 0
-              }
-            },
-            {
-              "name": "role",
-              "in": "query",
-              "schema": {
-                "type": "string",
-                "enum": ["CUSTOMER", "MODERATOR", "ADMIN"]
-              }
-            },
-            {
-              "name": "search",
-              "in": "query",
-              "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "List of users"
-            }
-          }
-        }
-      },
-      "/users/admin/admins": {
-        "get": {
-          "tags": ["Users", "Admin"],
-          "summary": "Get all admins and moderators (Admin only)",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "List of admins"
-            }
-          }
-        }
-      },
-      "/users/admin/{userId}/role": {
-        "patch": {
-          "tags": ["Users", "Admin"],
-          "summary": "Update user role (Admin only)",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "parameters": [
-            {
-              "name": "userId",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "requestBody": {
+      "delete": {
+        "tags": ["Reviews"],
+        "summary": "Delete review",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
             "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Review deleted successfully" },
+          "403": { "description": "Can only delete own reviews" }
+        }
+      }
+    },
+    "/reviews/admin/all": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Get all reviews (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of all reviews",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": ["role"],
-                  "properties": {
-                    "role": {
-                      "type": "string",
-                      "enum": ["CUSTOMER", "MODERATOR", "ADMIN"],
-                      "example": "MODERATOR"
-                    }
-                  }
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Review" }
                 }
               }
             }
           },
-          "responses": {
-            "200": {
-              "description": "Role updated"
-            }
-          }
+          "403": { "description": "Forbidden" }
         }
-      },
-      "/boats": {
-        "get": {
-          "tags": ["Boats"],
-          "summary": "Get all boats",
-          "parameters": [
-            {
-              "name": "type",
-              "in": "query",
-              "schema": {
-                "type": "string",
-                "enum": ["AC", "NON_AC"]
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "List of boats"
-            }
-          }
-        }
-      },
-      "/boats/{id}": {
-        "get": {
-          "tags": ["Boats"],
-          "summary": "Get boat by ID",
-          "parameters": [
-            {
-              "name": "id",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "Boat details"
-            },
-            "404": {
-              "description": "Boat not found"
-            }
-          }
-        }
-      },
-      "/destinations": {
-        "get": {
-          "tags": ["Destinations"],
-          "summary": "Get all destinations",
-          "responses": {
-            "200": {
-              "description": "List of destinations"
-            }
-          }
-        }
-      },
-      "/bookings": {
-        "post": {
-          "tags": ["Bookings"],
-          "summary": "Create a new booking",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "requestBody": {
+      }
+    },
+    "/reviews/admin/{id}/status": {
+      "patch": {
+        "tags": ["Reviews"],
+        "summary": "Update review status (Admin/Moderator)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
             "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "boatId",
-                    "startDate",
-                    "endDate",
-                    "pax",
-                    "roomsBooked",
-                    "placesVisited"
-                  ],
-                  "properties": {
-                    "boatId": {
-                      "type": "string",
-                      "example": "clxxx123456"
-                    },
-                    "startDate": {
-                      "type": "string",
-                      "format": "date-time",
-                      "example": "2024-12-25T00:00:00Z"
-                    },
-                    "endDate": {
-                      "type": "string",
-                      "format": "date-time",
-                      "example": "2024-12-27T00:00:00Z"
-                    },
-                    "pax": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 30,
-                      "example": 4
-                    },
-                    "roomsBooked": {
-                      "type": "array",
-                      "minItems": 1,
-                      "items": {
-                        "type": "object",
-                        "required": ["type", "quantity"],
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "example": "AC"
-                          },
-                          "quantity": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "example": 2
-                          }
-                        }
-                      }
-                    },
-                    "placesVisited": {
-                      "type": "array",
-                      "minItems": 5,
-                      "maxItems": 5,
-                      "items": {
-                        "type": "string"
-                      },
-                      "example": [
-                        "Tanguar Haor",
-                        "Ratargul",
-                        "Jaflong",
-                        "Srimangal",
-                        "Sylhet"
-                      ]
-                    }
-                  }
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED"] }
                 }
               }
-            }
-          },
-          "responses": {
-            "201": {
-              "description": "Booking created"
-            },
-            "400": {
-              "description": "Bad request"
-            },
-            "409": {
-              "description": "Booking conflict - rooms not available"
-            }
-          }
-        }
-      },
-      "/bookings/my": {
-        "get": {
-          "tags": ["Bookings"],
-          "summary": "Get current user's bookings",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "List of user bookings"
-            }
-          }
-        }
-      },
-      "/bookings/{id}": {
-        "get": {
-          "tags": ["Bookings"],
-          "summary": "Get booking by ID",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "parameters": [
-            {
-              "name": "id",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "Booking details"
-            },
-            "404": {
-              "description": "Booking not found"
-            }
-          }
-        }
-      },
-      "/bookings/admin/all": {
-        "get": {
-          "tags": ["Bookings", "Admin"],
-          "summary": "Get all bookings (Admin/Moderator only)",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "parameters": [
-            {
-              "name": "limit",
-              "in": "query",
-              "schema": {
-                "type": "integer"
-              }
-            },
-            {
-              "name": "offset",
-              "in": "query",
-              "schema": {
-                "type": "integer"
-              }
-            },
-            {
-              "name": "status",
-              "in": "query",
-              "schema": {
-                "type": "string",
-                "enum": [
-                  "PENDING",
-                  "CONFIRMED",
-                  "PAID",
-                  "CANCELLED",
-                  "REFUNDED"
-                ]
-              }
-            },
-            {
-              "name": "userId",
-              "in": "query",
-              "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "List of bookings"
-            }
-          }
-        }
-      },
-      "/bookings/admin/{id}/status": {
-        "patch": {
-          "tags": ["Bookings", "Admin"],
-          "summary": "Update booking status (Admin/Moderator only)",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "parameters": [
-            {
-              "name": "id",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["status"],
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "PENDING",
-                        "CONFIRMED",
-                        "PAID",
-                        "CANCELLED",
-                        "REFUNDED"
-                      ],
-                      "example": "CONFIRMED"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Booking confirmed successfully"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "Status updated"
-            }
-          }
-        }
-      },
-      "/reviews/boat/{boatId}": {
-        "get": {
-          "tags": ["Reviews"],
-          "summary": "Get reviews for a boat",
-          "parameters": [
-            {
-              "name": "boatId",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string"
-              }
-            },
-            {
-              "name": "limit",
-              "in": "query",
-              "schema": {
-                "type": "integer"
-              }
-            },
-            {
-              "name": "offset",
-              "in": "query",
-              "schema": {
-                "type": "integer"
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "List of reviews with average rating"
-            }
-          }
-        }
-      },
-      "/reviews": {
-        "post": {
-          "tags": ["Reviews"],
-          "summary": "Create a review",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["bookingId", "rating", "comment"],
-                  "properties": {
-                    "bookingId": {
-                      "type": "string",
-                      "example": "clxxx123456"
-                    },
-                    "rating": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 5,
-                      "example": 5
-                    },
-                    "comment": {
-                      "type": "string",
-                      "minLength": 10,
-                      "maxLength": 1000,
-                      "example": "Amazing experience! Highly recommended."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "responses": {
-            "201": {
-              "description": "Review created"
-            },
-            "400": {
-              "description": "Bad request"
-            },
-            "404": {
-              "description": "Booking not found or not eligible"
-            }
-          }
-        }
-      },
-      "/reviews/me": {
-        "get": {
-          "tags": ["Reviews"],
-          "summary": "Get current user's reviews",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "List of user reviews"
-            }
-          }
-        }
-      },
-      "/reviews/{id}": {
-        "put": {
-          "tags": ["Reviews"],
-          "summary": "Update a review",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "parameters": [
-            {
-              "name": "id",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "requestBody": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "rating": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 5
-                    },
-                    "comment": {
-                      "type": "string",
-                      "minLength": 10,
-                      "maxLength": 1000
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "Review updated"
             }
           }
         },
-        "delete": {
-          "tags": ["Reviews"],
-          "summary": "Delete a review",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "parameters": [
-            {
-              "name": "id",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "Review deleted"
-            }
-          }
+        "responses": {
+          "200": { "description": "Review status updated" },
+          "403": { "description": "Forbidden" }
         }
-      },
-      "/reviews/admin/all": {
-        "get": {
-          "tags": ["Reviews", "Admin"],
-          "summary": "Get all reviews (Admin/Moderator only)",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "parameters": [
-            {
-              "name": "limit",
-              "in": "query",
-              "schema": {
-                "type": "integer"
-              }
-            },
-            {
-              "name": "offset",
-              "in": "query",
-              "schema": {
-                "type": "integer"
-              }
-            },
-            {
-              "name": "boatId",
-              "in": "query",
-              "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "List of reviews"
-            }
-          }
+      }
+    },
+    "/payments/callback": {
+      "post": {
+        "tags": ["Payments"],
+        "summary": "Payment callback webhook",
+        "description": "Generic payment callback endpoint",
+        "responses": {
+          "200": { "description": "Callback processed" }
         }
-      },
-      "/reviews/admin/{id}/status": {
-        "patch": {
-          "tags": ["Reviews", "Admin"],
-          "summary": "Toggle review status (Admin/Moderator only)",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "parameters": [
-            {
-              "name": "id",
-              "in": "path",
-              "required": true,
+      }
+    },
+    "/payments/sslcommerz/success": {
+      "post": {
+        "tags": ["Payments"],
+        "summary": "SSLCommerz success callback",
+        "responses": {
+          "200": { "description": "Payment success processed" }
+        }
+      }
+    },
+    "/payments/sslcommerz/fail": {
+      "post": {
+        "tags": ["Payments"],
+        "summary": "SSLCommerz failure callback",
+        "responses": {
+          "200": { "description": "Payment failure processed" }
+        }
+      }
+    },
+    "/payments/sslcommerz/cancel": {
+      "post": {
+        "tags": ["Payments"],
+        "summary": "SSLCommerz cancel callback",
+        "responses": {
+          "200": { "description": "Payment cancellation processed" }
+        }
+      }
+    },
+    "/payments/bkash/initiate": {
+      "post": {
+        "tags": ["Payments"],
+        "summary": "Initiate bKash payment",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
               "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["isActive"],
-                  "properties": {
-                    "isActive": {
-                      "type": "boolean",
-                      "example": true
-                    }
-                  }
+                "type": "object",
+                "required": ["bookingId", "amount"],
+                "properties": {
+                  "bookingId": { "type": "string" },
+                  "amount": { "type": "number", "minimum": 0 }
                 }
               }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "Status updated"
-            }
-          }
-        }
-      },
-      "/notifications": {
-        "get": {
-          "tags": ["Notifications"],
-          "summary": "Get unread notifications",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "List of unread notifications"
-            }
-          }
-        }
-      },
-      "/static": {
-        "get": {
-          "tags": ["Static Pages"],
-          "summary": "Get all static pages",
-          "responses": {
-            "200": {
-              "description": "List of static pages"
             }
           }
         },
-        "post": {
-          "tags": ["Static Pages", "Admin"],
-          "summary": "Create a static page (Admin/Moderator only)",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["slug", "title", "content"],
-                  "properties": {
-                    "slug": {
-                      "type": "string",
-                      "example": "about-us"
-                    },
-                    "title": {
-                      "type": "string",
-                      "example": "About Us"
-                    },
-                    "content": {
-                      "type": "string",
-                      "example": "<h1>About West Bound Travels</h1><p>Content here...</p>"
-                    }
-                  }
+        "responses": {
+          "200": { "description": "Payment initiated successfully" },
+          "401": { "description": "Unauthorized" },
+          "429": { "description": "Rate limit exceeded" }
+        }
+      }
+    },
+    "/payments/sslcommerz/initiate": {
+      "post": {
+        "tags": ["Payments"],
+        "summary": "Initiate SSLCommerz payment",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["bookingId", "amount"],
+                "properties": {
+                  "bookingId": { "type": "string" },
+                  "amount": { "type": "number", "minimum": 0 }
                 }
               }
-            }
-          },
-          "responses": {
-            "201": {
-              "description": "Page created"
-            }
-          }
-        }
-      },
-      "/static/{slug}": {
-        "get": {
-          "tags": ["Static Pages"],
-          "summary": "Get static page by slug",
-          "parameters": [
-            {
-              "name": "slug",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string",
-                "example": "about-us"
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "Page content"
-            },
-            "404": {
-              "description": "Page not found"
             }
           }
         },
-        "put": {
-          "tags": ["Static Pages", "Admin"],
-          "summary": "Update static page (Admin/Moderator only)",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "parameters": [
-            {
-              "name": "slug",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "requestBody": {
+        "responses": {
+          "200": {
+            "description": "Payment initiated",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "title": {
-                      "type": "string"
-                    },
-                    "content": {
-                      "type": "string"
-                    }
+                    "success": { "type": "boolean" },
+                    "paymentUrl": { "type": "string" }
                   }
                 }
               }
             }
           },
-          "responses": {
-            "200": {
-              "description": "Page updated"
-            }
-          }
-        },
-        "delete": {
-          "tags": ["Static Pages", "Admin"],
-          "summary": "Delete static page (Admin only)",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "parameters": [
-            {
-              "name": "slug",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "Page deleted"
-            }
-          }
+          "401": { "description": "Unauthorized" }
         }
-      },
-      "/contact": {
-        "post": {
-          "tags": ["Contact"],
-          "summary": "Submit contact form",
-          "requestBody": {
+      }
+    },
+    "/payments/verify/{paymentId}": {
+      "get": {
+        "tags": ["Payments"],
+        "summary": "Verify payment status",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
             "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment status",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["name", "email", "message"],
                   "properties": {
-                    "name": {
-                      "type": "string",
-                      "minLength": 2,
-                      "maxLength": 100,
-                      "example": "John Doe"
-                    },
-                    "email": {
-                      "type": "string",
-                      "format": "email",
-                      "example": "john@example.com"
-                    },
-                    "phone": {
-                      "type": "string",
-                      "example": "+8801234567890"
-                    },
-                    "message": {
-                      "type": "string",
-                      "minLength": 10,
-                      "maxLength": 2000,
-                      "example": "I would like to know more about your services."
-                    }
+                    "success": { "type": "boolean" },
+                    "status": { "type": "string", "enum": ["PENDING", "COMPLETED", "FAILED"] }
                   }
                 }
               }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "Message sent successfully"
-            }
-          }
-        }
-      },
-      "/payments/bkash/initiate": {
-        "post": {
-          "tags": ["Payments"],
-          "summary": "Initiate bKash payment",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["bookingId"],
-                  "properties": {
-                    "bookingId": {
-                      "type": "string",
-                      "example": "clxxx123456"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "Payment initiated"
-            }
-          }
-        }
-      },
-      "/payments/sslcommerz/initiate": {
-        "post": {
-          "tags": ["Payments"],
-          "summary": "Initiate SSLCommerz payment",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["bookingId"],
-                  "properties": {
-                    "bookingId": {
-                      "type": "string",
-                      "example": "clxxx123456"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "Payment initiated"
-            }
-          }
-        }
-      },
-      "/payments/verify/{paymentId}": {
-        "get": {
-          "tags": ["Payments"],
-          "summary": "Verify payment status",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "parameters": [
-            {
-              "name": "paymentId",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string"
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "Payment status"
-            }
-          }
-        }
-      },
-      "/payments/history": {
-        "get": {
-          "tags": ["Payments"],
-          "summary": "Get payment history",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "Payment history"
-            }
-          }
-        }
-      },
-      "/payments/callback": {
-        "post": {
-          "tags": ["Payments"],
-          "summary": "Payment gateway webhook callback",
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["paymentId", "status"],
-                  "properties": {
-                    "paymentId": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": ["success", "failed"],
-                      "example": "success"
-                    },
-                    "transactionId": {
-                      "type": "string"
-                    },
-                    "amount": {
-                      "type": "number"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "Callback processed"
             }
           }
         }
       }
     },
-    "tags": [
-      {
-        "name": "Health",
-        "description": "Health check endpoints"
-      },
-      {
-        "name": "Authentication",
-        "description": "User authentication endpoints"
-      },
-      {
-        "name": "Users",
-        "description": "User management endpoints"
-      },
-      {
-        "name": "Boats",
-        "description": "Boat listing and details"
-      },
-      {
-        "name": "Destinations",
-        "description": "Destination information"
-      },
-      {
-        "name": "Bookings",
-        "description": "Booking management"
-      },
-      {
-        "name": "Reviews",
-        "description": "User reviews and ratings"
-      },
-      {
-        "name": "Notifications",
-        "description": "User notifications"
-      },
-      {
-        "name": "Static Pages",
-        "description": "Static page management"
-      },
-      {
-        "name": "Contact",
-        "description": "Contact form submission"
-      },
-      {
-        "name": "Payments",
-        "description": "Payment processing"
-      },
-      {
-        "name": "Admin",
-        "description": "Admin-only endpoints"
+    "/payments/history": {
+      "get": {
+        "tags": ["Payments"],
+        "summary": "Get payment history",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of user payments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Payment" }
+                }
+              }
+            }
+          }
+        }
       }
-    ]
+    },
+    "/contact": {
+      "post": {
+        "tags": ["Contact"],
+        "summary": "Submit contact form",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "message"],
+                "properties": {
+                  "name": { "type": "string", "example": "John Doe" },
+                  "email": { "type": "string", "format": "email", "example": "john@example.com" },
+                  "phone": { "type": "string", "example": "+880 1711-234567" },
+                  "subject": { "type": "string", "example": "Booking Inquiry" },
+                  "message": { "type": "string", "example": "I would like to book a boat for next weekend" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Contact form submitted successfully" },
+          "429": { "description": "Too many requests" }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Get user notifications",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of notifications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Notification" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/{id}": {
+      "delete": {
+        "tags": ["Notifications"],
+        "summary": "Delete notification",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Notification deleted successfully" }
+        }
+      }
+    },
+    "/settings/min-nights": {
+      "get": {
+        "tags": ["Settings"],
+        "summary": "Get minimum booking nights (Public)",
+        "responses": {
+          "200": {
+            "description": "Minimum booking nights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "minNights": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings": {
+      "get": {
+        "tags": ["Settings"],
+        "summary": "Get all settings (Admin only)",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "List of settings" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/settings/{key}": {
+      "get": {
+        "tags": ["Settings"],
+        "summary": "Get setting by key (Admin only)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Setting value" },
+          "403": { "description": "Forbidden" }
+        }
+      },
+      "put": {
+        "tags": ["Settings"],
+        "summary": "Update setting (Admin only)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["value"],
+                "properties": {
+                  "value": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Setting updated successfully" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/settings/booking/min-nights": {
+      "put": {
+        "tags": ["Settings"],
+        "summary": "Update minimum booking nights (Admin only)",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["minNights"],
+                "properties": {
+                  "minNights": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Setting updated successfully" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/settings/initialize": {
+      "post": {
+        "tags": ["Settings"],
+        "summary": "Initialize default settings (Admin only)",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Default settings initialized" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Enter JWT token obtained from login"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "phone": { "type": "string" },
+          "address": { "type": "string" },
+          "avatar": { "type": "string" },
+          "role": { "type": "string", "enum": ["CUSTOMER", "MODERATOR", "ADMIN"] },
+          "isVerified": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Boat": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "capacity": { "type": "integer" },
+          "pricePerNight": { "type": "number" },
+          "images": { "type": "array", "items": { "type": "string" } },
+          "amenities": { "type": "array", "items": { "type": "string" } },
+          "isActive": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Destination": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "location": { "type": "string" },
+          "description": { "type": "string" },
+          "highlights": { "type": "array", "items": { "type": "string" } },
+          "images": { "type": "array", "items": { "type": "string" } },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Booking": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "boatId": { "type": "string" },
+          "startDate": { "type": "string", "format": "date" },
+          "endDate": { "type": "string", "format": "date" },
+          "guests": { "type": "integer" },
+          "totalPrice": { "type": "number" },
+          "status": { "type": "string", "enum": ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"] },
+          "destination": { "type": "string" },
+          "specialRequests": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Blog": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "slug": { "type": "string" },
+          "content": { "type": "string" },
+          "excerpt": { "type": "string" },
+          "featuredImage": { "type": "string" },
+          "author": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED"] },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "publishedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "GalleryItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "imageUrl": { "type": "string" },
+          "category": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Review": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "boatId": { "type": "string" },
+          "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "comment": { "type": "string" },
+          "status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED"] },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Payment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "bookingId": { "type": "string" },
+          "userId": { "type": "string" },
+          "amount": { "type": "number" },
+          "method": { "type": "string", "enum": ["bKash", "SSLCommerz"] },
+          "status": { "type": "string", "enum": ["PENDING", "COMPLETED", "FAILED"] },
+          "transactionId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "title": { "type": "string" },
+          "message": { "type": "string" },
+          "type": { "type": "string" },
+          "read": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string", "example": "Error message" },
+          "error": { "type": "string" }
+        }
+      }
+    }
   }
 }

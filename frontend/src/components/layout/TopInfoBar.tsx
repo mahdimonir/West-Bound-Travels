@@ -7,14 +7,14 @@
  */
 export default function TopInfoBar() {
   const contactInfo = {
-    phone: '+880 1711-234567',
+    phone: '+880 1676-663600',
     email: 'info@westboundtravels.com',
     hours: 'Mon-Sun: 9:00 AM - 8:00 PM',
   };
 
   const tourGuide = {
     name: 'Captain Rahman',
-    phone: '+880 1711-987654',
+    phone: '+880 1711-044975',
     title: 'Senior Tour Guide',
   };
 

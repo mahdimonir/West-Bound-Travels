@@ -48,6 +48,7 @@ export default function GalleryForm({ onSave, onCancel, isSaving = false }: Gall
         />
         {preview && (
           <div className="mt-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preview}
               alt="Preview"

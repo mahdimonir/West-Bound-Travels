@@ -22,11 +22,12 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={{
-          code({ node, inline, className, children, ...props }) {
+          code({ node, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || '');
+            const inline = !match;
             return !inline && match ? (
               <SyntaxHighlighter
-                style={vscDarkPlus}
+                style={vscDarkPlus as any}
                 language={match[1]}
                 PreTag="div"
                 {...props}
@@ -64,6 +65,7 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
             <blockquote className="border-l-4 border-primary-500 pl-4 italic text-gray-600 my-4" {...props} />
           ),
           img: ({ node, ...props }) => (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img className="rounded-lg shadow-md my-6 w-full" {...props} alt={props.alt || 'Blog image'} />
           ),
           table: ({ node, ...props }) => (

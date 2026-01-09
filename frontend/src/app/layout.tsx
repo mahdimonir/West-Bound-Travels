@@ -26,6 +26,7 @@ const inter = Inter({
 
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: "West Bound Travels - Luxury Houseboat Tours in Bangladesh",
   description: "Experience the beauty of Tanguar Haor and Sylhet with West Bound Travels. Premium houseboat tours with luxury accommodations, gourmet meals, and unforgettable destinations.",
   keywords: "houseboat tours, Tanguar Haor, Bangladesh tourism, luxury travel, boat tours, Sylhet destinations",

@@ -5,7 +5,7 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h1 className="text-4xl font-bold text-gray-900 mb-8">Privacy Policy</h1>
-        <p className="text-gray-600 mb-8">Last updated: December 2024</p>
+        <p className="text-gray-600 mb-8">Last updated: January 2026</p>
 
         <div className="prose prose-lg max-w-none">
           <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">1. Information We Collect</h2>
@@ -61,7 +61,7 @@ export default function PrivacyPage() {
             <br />
             Email: info@westboundtravels.com
             <br />
-            Phone: +880 1XXX-XXXXXX
+            Phone: +880 1676-663600
           </p>
         </div>
 

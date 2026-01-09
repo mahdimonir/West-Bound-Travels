@@ -47,7 +47,7 @@ npm run dev
 ## Deployment
 
 - **Frontend**: Vercel  
-- **Backend**: Railway / Render / VPS
+- **Backend**: Vercel
 
 ## License
 

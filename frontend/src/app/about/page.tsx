@@ -99,7 +99,7 @@ export default function AboutPage() {
           <div className="order-1 lg:order-2">
             <div className="relative h-96 rounded-2xl overflow-hidden shadow-2xl">
               <Image
-                src="/images/hero-boat.jpg"
+                src="/images/West-Bound-Travels-Hero.png"
                 alt="West Bound Travels houseboat"
                 fill
                 className="object-cover"

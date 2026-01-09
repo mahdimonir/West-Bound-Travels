@@ -8,7 +8,7 @@ export default function HeroSection() {
       <div className="absolute inset-0 z-0">
         <div className="relative w-full h-full">
           <Image
-            src="/images/hero-boat.jpg"
+            src="/images/West-Bound-Travels-Hero.png"
             alt="Luxury houseboat on Tanguar Haor"
             fill
             className="object-cover"

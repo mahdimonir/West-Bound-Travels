@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
+    createContext,
+    ReactNode,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
 } from "react";
 import api from "./api";
 
@@ -114,6 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [authChannel]);
 
   useEffect(() => {
+    // Only run in browser environment
+    if (typeof window === 'undefined') return;
+
     // Keep legacy localStorage listener for fallback or other non-BroadcastChannel needs
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "user" || e.key === "token") {
