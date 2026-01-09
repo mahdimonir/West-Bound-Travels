@@ -1,7 +1,7 @@
-import { uploadFields } from "@/middleware/upload.middleware.js";
 import { Router } from "express";
 import { authenticate } from "../../middleware/auth.middleware.js";
 import { roleMiddleware } from "../../middleware/role.middleware.js";
+import { uploadFields } from "../../middleware/upload.middleware.js";
 import { GalleryController } from "./gallery.controller.js";
 
 const router = Router();
