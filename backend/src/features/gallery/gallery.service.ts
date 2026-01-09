@@ -12,6 +12,11 @@ export class GalleryService {
     alt?: string;
     category: "BOAT" | "DESTINATION" | "NATURE" | "CULCTURE";
   }) {
+    // Validate required fields
+    if (!data.alt || data.alt.trim() === '') {
+      throw { status: 400, message: "Caption (alt text) is required" };
+    }
+
     let finalSrc = data.src || null;
     if (data.imageLocalPath) {
       const res: any = await uploadImage(
@@ -24,7 +29,11 @@ export class GalleryService {
     if (!finalSrc) throw { status: 400, message: "Image source is required" };
 
     return prisma.gallery.create({
-      data: { src: finalSrc, alt: data.alt || null, category: data.category },
+      data: { 
+        src: finalSrc, 
+        alt: data.alt.trim(), 
+        category: data.category 
+      },
     });
   }
 
