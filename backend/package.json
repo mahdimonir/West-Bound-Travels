@@ -1,7 +1,7 @@
 {
-  "name": "backend",
+  "name": "west-bound-travels-backend",
   "version": "1.0.0",
-  "description": "This document outlines the complete RESTful API specification and database architecture required to support the West Bound Travels platform.",
+  "description": "Official Backend API for West Bound Travels - providing services for booking luxury river cruises, managing destinations, and processing payments.",
   "type": "commonjs",
   "scripts": {
     "dev": "tsx watch src/server.ts",
