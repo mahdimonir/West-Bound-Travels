@@ -6,13 +6,18 @@ import { blogsService, type BlogWithDetails } from '@/lib/services';
 import { useToast } from '@/lib/toast';
 import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
-import 'react-quill/dist/quill.snow.css';
 
 // Dynamic import for react-quill (client-only)
 const ReactQuill = dynamic(
   async () => {
     const { default: RQ } = await import('react-quill');
-    return ({ forwardedRef, ...props }: any) => <RQ ref={forwardedRef} {...props} />;
+    // @ts-expect-error - CSS import for side effects, types not found but handled by webpack
+    await import('react-quill/dist/quill.snow.css');
+    function ReactQuillWrapper({ forwardedRef, ...props }: any) {
+      return <RQ ref={forwardedRef} {...props} />;
+    }
+    ReactQuillWrapper.displayName = 'ReactQuill';
+    return ReactQuillWrapper;
   },
   {
     ssr: false,

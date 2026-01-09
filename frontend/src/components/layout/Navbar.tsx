@@ -59,10 +59,13 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-12 h-12 bg-gradient-hero rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 shadow-lg shadow-primary/20">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/West-Bound-Travels-icon.png" 
+                alt="West Bound Travels Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="hidden md:block">
               <span className="text-xl font-bold text-gradient-primary">West Bound Travels</span>

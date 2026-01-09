@@ -5,12 +5,12 @@ export default function CancellationPage() {
     <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h1 className="text-4xl font-bold text-gray-900 mb-8">Cancellation & Refund Policy</h1>
-        <p className="text-gray-600 mb-8">Last updated: December 2024</p>
+        <p className="text-gray-600 mb-8">Last updated: January 2026</p>
 
         <div className="prose prose-lg max-w-none">
           <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Cancellation by Guest</h2>
           
-          <div className="bg-luxury-50 border-l-4 border-luxury-500 p-6 rounded-r-lg mb-6">
+          <div className="bg-accent-50 border-l-4 border-accent-500 p-6 rounded-r-lg mb-6">
             <h3 className="text-lg font-bold text-gray-900 mb-3">Refund Schedule</h3>
             <ul className="space-y-2 text-gray-700">
               <li><strong>7+ days before departure:</strong> 50% refund</li>
@@ -25,7 +25,7 @@ export default function CancellationPage() {
             To cancel your booking:
           </p>
           <ol className="list-decimal pl-6 text-gray-700 mb-6">
-            <li>Contact us via email at info@westboundtravels.com or phone at +880 1XXX-XXXXXX</li>
+            <li>Contact us via email at info@westboundtravels.com or phone at +880 1676-663600</li>
             <li>Provide your booking reference number</li>
             <li>Specify the reason for cancellation</li>
             <li>Refunds will be processed within 7-10 business days</li>
@@ -70,7 +70,7 @@ export default function CancellationPage() {
           <p className="text-gray-700 mb-4">
             Email: info@westboundtravels.com
             <br />
-            Phone: +880 1XXX-XXXXXX
+            Phone: +880 1676-663600
             <br />
             Office Hours: 9:00 AM - 6:00 PM (Bangladesh Time)
           </p>

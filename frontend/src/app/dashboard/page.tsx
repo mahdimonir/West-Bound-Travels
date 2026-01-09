@@ -1,6 +1,5 @@
 'use client';
 
-import BlogEditor from '@/components/admin/BlogEditor';
 import BoatForm from '@/components/dashboard/BoatForm';
 import DestinationForm from '@/components/dashboard/DestinationForm';
 import GalleryForm from '@/components/dashboard/GalleryForm';
@@ -9,8 +8,17 @@ import { useBlogs, useBoats, useBookings, useDestinations, useGallery, useUsers 
 import { useAuth } from '@/lib/AuthContext';
 import { blogsService, boatsService, bookingsService, destinationsService, galleryService, usersService, type BlogWithDetails } from '@/lib/services';
 import { useToast } from '@/lib/toast';
+import dynamicImport from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+const BlogEditor = dynamicImport(() => import('@/components/admin/BlogEditor'), { 
+  ssr: false,
+  loading: () => <div className="h-96 bg-gray-100 animate-pulse rounded-lg" />
+});
+
+// Disable static optimization for this page
+export const dynamic = 'force-dynamic';
 
 // Modal Component
 function Modal({ isOpen, onClose, title, children }: { isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
@@ -34,6 +42,13 @@ function Modal({ isOpen, onClose, title, children }: { isOpen: boolean; onClose:
 }
 
 export default function Dashboard() {
+  const [mounted, setMounted] = useState(false);
+  
+  // Ensure component only renders on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const { user, isAuthenticated } = useAuth();
   const { showToast, success, error: toastError } = useToast();
   const router = useRouter();
@@ -62,6 +77,13 @@ export default function Dashboard() {
   
   const [showBlogEditor, setShowBlogEditor] = useState(false);
   const [editingBlog, setEditingBlog] = useState<BlogWithDetails | null>(null);
+
+  // Wait for client-side mount
+  if (!mounted) {
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+    </div>;
+  }
 
   // Auth check
   if (!isAuthenticated || (user?.role !== 'ADMIN' && user?.role !== 'MODERATOR')) {

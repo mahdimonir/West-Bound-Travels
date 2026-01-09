@@ -28,6 +28,9 @@ app.use(
   express.static(path.join(process.cwd(), "node_modules/swagger-ui-dist"))
 );
 
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(process.cwd(), 'public')));
+
 // Security Middleware
 app.use(
   helmet({
@@ -74,8 +77,8 @@ app.use("/api/v1/payments", paymentRoutes);
 app.use("/api/v1/gallery", galleryRoutes);
 app.use("/api/v1/settings", settingsRoutes);
 
-// Root Route
-app.get("/", (req, res) => {
+// Welcome Handler (reusable for multiple routes)
+const welcomeHandler = (req: express.Request, res: express.Response) => {
   res.status(200).json({
     status: "success",
     message: "Welcome to West Bound Travels API",
@@ -85,15 +88,27 @@ app.get("/", (req, res) => {
     health_check: `${req.protocol}://${req.get("host")}/api/v1/health`,
     timestamp: new Date().toISOString(),
   });
-});
+};
+
+// Root Routes
+app.get("/", welcomeHandler);
+app.get("/api/v1", welcomeHandler);
 
 // Health Check
 app.get("/api/v1/health", (req, res) => {
   res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Swagger UI
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// Swagger UI with custom configuration
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, {
+    customSiteTitle: "West Bound Travels API Docs",
+    customfavIcon: "/favicon.ico",
+    customCss: '.swagger-ui .topbar { display: none }',
+  })
+);
 
 // 404 Handler
 app.use((req: express.Request, res: express.Response) => {

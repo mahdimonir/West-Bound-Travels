@@ -62,8 +62,8 @@ export default function ContactPage() {
         </svg>
       ),
       title: 'Phone',
-      content: '+880 1XXX-XXXXXX',
-      link: 'tel:+8801XXXXXXXXX',
+      content: '+880 1676-663600',
+      link: 'tel:+8801676663600',
     },
     {
       icon: (
@@ -84,7 +84,7 @@ export default function ContactPage() {
       ),
       title: 'Address',
       content: 'Sunamganj, Sylhet, Bangladesh',
-      link: '#',
+      link: '#map',
     },
     {
       icon: (
@@ -94,7 +94,7 @@ export default function ContactPage() {
       ),
       title: 'Working Hours',
       content: '24/7 Support Available',
-      link: '#',
+      link: '#contact-form',
     },
   ];
 
@@ -134,7 +134,7 @@ export default function ContactPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Form */}
           <Card luxury={true}>
-            <div className="p-8">
+            <div className="p-8" id="contact-form">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Send Us a Message</h2>
               
               {submitted && (
@@ -252,14 +252,18 @@ export default function ContactPage() {
           {/* Map & Info */}
           <div>
             {/* Map Placeholder */}
-            <Card className="mb-6 h-96 bg-gray-200 flex items-center justify-center">
-              <div className="text-center">
-                <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-                <p className="text-gray-600">Google Maps Integration</p>
-                <p className="text-sm text-gray-500">Sunamganj, Sylhet, Bangladesh</p>
-              </div>
+            <Card className="mb-6 h-96 overflow-hidden">
+              <iframe
+                id="map"
+                src="https://maps.google.com/maps?q=25.140043,91.0883278&hl=en&z=14&output=embed"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="West Bound Travels Location - Tanguar Haor"
+              />
             </Card>
 
             {/* Additional Info */}
