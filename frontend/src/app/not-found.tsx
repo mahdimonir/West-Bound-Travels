@@ -50,7 +50,7 @@ export default function NotFound() {
         <div className="mb-8 space-y-3 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           <h2 className="text-3xl font-bold text-gray-900">Lost at Sea?</h2>
           <p className="text-lg text-gray-600 max-w-md mx-auto">
-            Looks like this page has sailed away. Don't worry, there are plenty of amazing destinations waiting for you!
+            Looks like this page has sailed away. Don&apos;t worry, there are plenty of amazing destinations waiting for you!
           </p>
         </div>
 

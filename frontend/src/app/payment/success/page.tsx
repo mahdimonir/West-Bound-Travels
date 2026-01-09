@@ -115,7 +115,7 @@ function PaymentSuccessContent() {
               </div>
 
               <div className="bg-blue-50 p-4 rounded-lg mb-6 text-left">
-                <h4 className="font-semibold text-blue-900 mb-2 text-sm">What's Next?</h4>
+                <h4 className="font-semibold text-blue-900 mb-2 text-sm">What&apos;s Next?</h4>
                 <ul className="text-xs text-blue-700 space-y-1">
                   <li>• Check your email for detailed booking confirmation</li>
                   <li>• Our team will contact you 24 hours before your trip</li>

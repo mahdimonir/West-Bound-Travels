@@ -610,6 +610,7 @@ export default function Dashboard() {
                   <div className="col-span-full text-center py-8 text-gray-500">No images found</div>
                 ) : galleryItems.map(item => (
                   <div key={item.id} className="relative group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={item.src} alt={item.alt} className="w-full h-48 object-cover rounded-lg" />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
                       <button
