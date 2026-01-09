@@ -119,7 +119,7 @@ function ProfileContent() {
     if (tab && ['overview', 'profile', 'bookings', 'reviews'].includes(tab)) {
       setActiveTab(tab as typeof activeTab);
     }
-  }, [isAuthenticated, router, searchParams]);
+  }, [isAuthenticated, router, searchParams, toastError, updateUser]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

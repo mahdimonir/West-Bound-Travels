@@ -125,6 +125,7 @@ const example = 'Hello World';
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {images.map((image) => (
               <div key={image.id} className="relative group">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={image.url}
                   alt={image.alt}
