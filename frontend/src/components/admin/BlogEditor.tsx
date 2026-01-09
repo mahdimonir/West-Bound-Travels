@@ -4,17 +4,22 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { blogsService, type BlogWithDetails } from '@/lib/services';
 import { useToast } from '@/lib/toast';
+import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
 import 'react-quill/dist/quill.snow.css';
 
 // Dynamic import for react-quill (client-only)
-/*
-const ReactQuill = dynamic(() => import('react-quill'), { 
-  ssr: false,
-  loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-lg" />
-});
-*/
-const ReactQuill = () => <div>React Quill Disabled for Build Debug</div>;
+const ReactQuill = dynamic(
+  async () => {
+    const { default: RQ } = await import('react-quill');
+    return ({ forwardedRef, ...props }: any) => <RQ ref={forwardedRef} {...props} />;
+  },
+  {
+    ssr: false,
+    loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-lg" />,
+  }
+);
+// const ReactQuill = () => <div>React Quill Disabled for Build Debug</div>;
 
 interface BlogEditorProps {
   blog?: BlogWithDetails | null;
@@ -215,21 +220,13 @@ export default function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Content *</label>
           <div className="border border-gray-300 rounded-lg overflow-hidden">
-            {/* 
             <ReactQuill
               theme="snow"
               value={formData.content}
-              onChange={(content) => setFormData(prev => ({ ...prev, content }))}
+              onChange={(content: string) => setFormData(prev => ({ ...prev, content }))}
               modules={modules}
               formats={formats}
-              className="h-64"
-            />
-            */}
-            <textarea
-              value={formData.content}
-              onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-              className="w-full h-64 p-4"
-              placeholder="Content editor disabled for debugging..."
+              className="h-64 mb-12"
             />
           </div>
         </div>
