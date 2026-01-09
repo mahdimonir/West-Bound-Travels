@@ -1,6 +1,6 @@
 # West Bound Travels 🛥️✨
 
-![West Bound Travels Banner](https://via.placeholder.com/1200x600/FF6600/FFFFFF?text=West+Bound+Travels+-+Luxury+Houseboat+Adventures)  
+![West Bound Travels Banner](https://raw.githubusercontent.com/mahdimonir/West-Bound-Travels/refs/heads/main/frontend/public/images/West-Bound-Travels-Banner.png)  
 *Luxury houseboat experiences in the serene wetlands of Sunamganj, Bangladesh*
 
 **West Bound Travels** is a premium tourism platform specializing in exclusive houseboat journeys through Tanguar Haor and surrounding destinations. This full-stack application delivers a seamless, elegant booking experience for travelers and powerful management tools for administrators.
@@ -29,19 +29,19 @@
 ## 📸 Screenshots
 
 ### Home Page
-![Home Page](https://via.placeholder.com/1200x800/00BFFF/FFFFFF?text=Home+Page+-+Hero+with+Boat+Gallery)
+![Home Page](https://raw.githubusercontent.com/mahdimonir/West-Bound-Travels/refs/heads/main/frontend/public/images/west-bound-travel-home.png)
 
 ### Boat Details & Booking
-![Boat Details](https://via.placeholder.com/1200x800/228B22/FFFFFF?text=Boat+Details+-+Rooms%2C+Gallery%2C+Calendar)
+![Boat Details](https://raw.githubusercontent.com/mahdimonir/West-Bound-Travels/refs/heads/main/frontend/public/images/west-bound-travel-boats.png)
 
-### Booking Flow
-![Booking Process](https://via.placeholder.com/1200x800/FF6600/FFFFFF?text=Multi-Step+Booking+-+Dates%2C+Rooms%2C+Payment)
+### Payment Flow
+![Booking Process](https://raw.githubusercontent.com/mahdimonir/West-Bound-Travels/refs/heads/main/frontend/public/images/west-bound-travel-payment.png)
 
 ### User Dashboard
-![User Dashboard](https://via.placeholder.com/1200x800/D4AF37/FFFFFF?text=User+Dashboard+-+Bookings+%26+Profile)
+![User Dashboard](https://raw.githubusercontent.com/mahdimonir/West-Bound-Travels/refs/heads/main/frontend/public/images/west-bound-travel-user-dash.png)
 
 ### Admin Panel
-![Admin Panel](https://via.placeholder.com/1200x800/4B0082/FFFFFF?text=Admin+Dashboard+-+Fleet+%26+Content+Management)
+![Admin Panel](https://raw.githubusercontent.com/mahdimonir/West-Bound-Travels/refs/heads/main/frontend/public/images/west-bound-travel-admin-dash.png)
 
 > *Note: Replace placeholder images with actual screenshots after deployment.*
 
