@@ -1,7 +1,7 @@
 import Button from '@/components/ui/Button';
 import { useState } from 'react';
 
-type GalleryCategory = 'DESTINATION' | 'BOAT' | 'EXPERIENCE' | 'WILDLIFE' | 'FOOD' | 'OTHER';
+type GalleryCategory = 'BOAT' | 'DESTINATION' | 'NATURE' | 'CULCTURE';
 
 interface GalleryFormProps {
   onSave: (data: { alt: string; category: GalleryCategory }, file: File) => Promise<void>;
@@ -12,7 +12,7 @@ interface GalleryFormProps {
 export default function GalleryForm({ onSave, onCancel, isSaving = false }: GalleryFormProps) {
   const [formData, setFormData] = useState({
     alt: '',
-    category: 'DESTINATION' as GalleryCategory,
+    category: 'BOAT' as GalleryCategory,
   });
 
   const [file, setFile] = useState<File | null>(null);
@@ -76,12 +76,10 @@ export default function GalleryForm({ onSave, onCancel, isSaving = false }: Gall
           onChange={(e) => setFormData({ ...formData, category: e.target.value as GalleryCategory })}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         >
-          <option value="DESTINATION">Destination</option>
           <option value="BOAT">Boat</option>
-          <option value="EXPERIENCE">Experience</option>
-          <option value="WILDLIFE">Wildlife</option>
-          <option value="FOOD">Food</option>
-          <option value="OTHER">Other</option>
+          <option value="DESTINATION">Destination</option>
+          <option value="NATURE">Nature</option>
+          <option value="CULCTURE">Culture</option>
         </select>
       </div>
 
