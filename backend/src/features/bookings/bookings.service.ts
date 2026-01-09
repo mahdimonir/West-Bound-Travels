@@ -420,4 +420,67 @@ export class BookingService {
       },
     };
   }
+  // Validate if the booking is still available (for pre-payment check)
+  static async validateBookingAvailability(bookingId: string) {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+    });
+
+    if (!booking) throw { status: 404, message: "Booking not found" };
+
+    const boat = await prisma.boat.findUnique({
+      where: { id: booking.boatId },
+    });
+
+    if (!boat) throw { status: 404, message: "Boat not found" };
+
+    // Fetch all overlapping bookings (exclude PENDING, CANCELLED, REFUNDED)
+    // and exclude current booking (though safe if it's PENDING)
+    const overlappingBookings = await prisma.booking.findMany({
+      where: {
+        boatId: booking.boatId,
+        status: { in: ["PAID", "CONFIRMED", "COMPLETED"] },
+        id: { not: bookingId },
+        OR: [
+          { checkIn: { lte: booking.checkOut }, checkOut: { gte: booking.checkIn } },
+        ],
+      },
+    });
+
+    // Aggregate booked rooms
+    const bookedRoomsCount: Record<string, number> = {};
+    overlappingBookings.forEach((b: any) => {
+      const rooms = b.roomsBooked as any;
+      if (Array.isArray(rooms)) {
+        rooms.forEach((r: { type: string; quantity: number }) => {
+          bookedRoomsCount[r.type] =
+            (bookedRoomsCount[r.type] || 0) + r.quantity;
+        });
+      }
+    });
+
+    // Check against boat capacity
+    const boatRoomsArr = (boat.rooms || []) as Array<any>;
+    const boatRooms: Record<string, number> = {};
+    boatRoomsArr.forEach((r: any) => {
+      if (r && r.type) boatRooms[r.type] = r.count || 0;
+    });
+
+    const myRooms = booking.roomsBooked as any;
+    if (Array.isArray(myRooms)) {
+      for (const reqRoom of myRooms) {
+        const alreadyBooked = bookedRoomsCount[reqRoom.type] || 0;
+        const totalAvailable = boatRooms[reqRoom.type] || 0;
+
+        if (alreadyBooked + reqRoom.quantity > totalAvailable) {
+          throw {
+            status: 409, // Conflict
+            message: `Booking no longer available. Not enough ${reqRoom.type} rooms left.`,
+          };
+        }
+      }
+    }
+
+    return true;
+  }
 }
