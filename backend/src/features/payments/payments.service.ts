@@ -9,6 +9,7 @@ type BookingStatus =
 import prisma from "../../config/database.js";
 import { env } from "../../config/env.js";
 import { emailService } from "../../services/email.service.js";
+import { BookingService } from "../bookings/bookings.service.js";
 import { NotificationService } from "../notifications/notifications.service.js";
 
 export interface PaymentInitiateRequest {
@@ -41,6 +42,9 @@ export class PaymentService {
     if (booking.status !== "PENDING") {
       throw { status: 400, message: "Booking is not eligible for payment. It may already be paid or cancelled." };
     }
+
+    // Check availability before proceeding
+    await BookingService.validateBookingAvailability(bookingId);
 
     // In production, this would call bKash API
     // For now, we'll simulate the payment initiation
@@ -84,6 +88,9 @@ export class PaymentService {
     if (booking.status !== "PENDING") {
       throw { status: 400, message: "Booking is not eligible for payment. It may already be paid or cancelled." };
     }
+
+    // Check availability before proceeding
+    await BookingService.validateBookingAvailability(bookingId);
 
     // SSLCommerz professional implementation
     const store_id = env.SSLCOMMERZ_STORE_ID;

@@ -3,8 +3,10 @@ import fs from "fs";
 import multer from "multer";
 import path from "path";
 
-// Use temp directory for uploads (absolute path)
-const UPLOAD_DIR = path.join(process.cwd(), "uploads");
+import os from "os";
+
+// Use temp directory for uploads (system temp dir)
+const UPLOAD_DIR = path.join(os.tmpdir(), "uploads");
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
