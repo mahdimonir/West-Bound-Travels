@@ -21,7 +21,7 @@ interface BoatFormProps {
 export default function BoatForm({ boat, onSave, onCancel, isSaving = false }: BoatFormProps) {
   const [formData, setFormData] = useState({
     name: boat?.name || '',
-    type: (boat?.type || 'AC') as 'AC' | 'Non-AC',
+    type: (boat?.type || 'AC') as 'AC' | 'NON_AC',
     totalRooms: boat?.totalRooms || 7,
     description: boat?.description || '',
     features: boat?.features || [],
@@ -92,11 +92,11 @@ export default function BoatForm({ boat, onSave, onCancel, isSaving = false }: B
           <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
           <select
             value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: e.target.value as 'AC' | 'Non-AC' })}
+            onChange={(e) => setFormData({ ...formData, type: e.target.value as 'AC' | 'NON_AC' })}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
           >
             <option value="AC">AC</option>
-            <option value="Non-AC">Non-AC</option>
+            <option value="NON_AC">NON-AC</option>
           </select>
         </div>
       </div>
