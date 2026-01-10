@@ -13,9 +13,9 @@ export default function TopInfoBar() {
   };
 
   const tourGuide = {
-    name: 'Captain Rahman',
+    name: 'MD ABID HASAN',
     phone: '+880 1711-044975',
-    title: 'Senior Tour Guide',
+    title: 'Senior Travel Consultant',
   };
 
   return (
